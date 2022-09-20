@@ -9,7 +9,11 @@ Coming: BTCPayserver
 
 I would like to make many things like Webhook verification generic. 
 I would like to make responses as generic as possible, currently this is possible with Coinpayments and Paypal, but I implemented Stripe responses as conditions... Perhaps I should do the same with the others. 
+I am going to remove all \*parse-as\* and instead parse json as hash-tables. Coinpayments 
+will be an exception until I am required to fix it.
 
+
+For now there is backward compatibility with cl-coinpayments, latter-day-paypal and stripe-against-the-modern-world as you can use their respective nicknames.
 
 # Coinpayments
 
