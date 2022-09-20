@@ -1,0 +1,597 @@
+# lisp-pay
+
+## Wrapper over multiple Payment Processor API's
+
+Current: Paypal, Stripe, Coinpayment
+Coming: BTCPayserver
+
+
+# Coinpayments
+
+
+## cl-coinpayments
+This is simply a helper library for using working with the original version of the 
+coinpayment.net API, there is a new version of the API in the works.
+
+
+## Intro
+The coinpayment IPN (Instant Payment Notification) system sends messages to a listening 
+server to inform the server of activity within their coinpayment account, whether this is 
+to inform the user of a processed payment, whether a payment has failed etc. 
+You can see the current docs on IPN's here: https://www.coinpayments.net/merchant-tools-ipn
+this library just helps with managing the IPN's you receive.
+
+### Quick notes
+
+The post data sent from the coinpayment server is formatted in snake case ie 
+`i_am_a_variable` but when you convert the data into a plist representing an IPN, 
+all the snake_case keys are converted to kebab case ie i-am-a-variable, so 
+`ipn_type` would be the keyword `:IPN-TYPE`. Parsing is memoized so it should be
+pretty fast.
+
+## Working with IPN's
+
+This section is talking about the IPN's, the next is about API calls.
+
+### Parsing the IPN's
+
+There is a generic function called `(parse-data data)` which accepts a list, a string or an 
+array, with this it attempts to convert it to a PLIST.
+
+```lisp
+#(97 109 111 117 110 116 61 49 48 46 48 48 48 48 48 48 48 48 38 97 109 111 117
+  110 116 105 61 49 48 48 48 48 48 48 48 48 48 38 99 117 114 114 101 110 99 121
+  61 76 84 67 84 38 102 101 101 61 48 46 48 48 48 48 48 48 48 48 38 102 101 101
+  105 61 48 38 102 105 97 116 95 97 109 111 117 110 116 61 49 49 48 56 46 48 51
+  48 50 57 49 53 48 38 102 105 97 116 95 97 109 111 117 110 116 105 61 49 49 48
+  56 48 51 48 50 57 49 53 48 38 102 105 97 116 95 99 111 105 110 61 71 66 80 38
+  102 114 111 109 61 56 97 99 57 53 50 56 100 49 57 49 102 56 102 98 51 102 53
+  98 57 100 97 97 50 53 53 51 56 99 52 97 101 38 105 112 110 95 105 100 61 102
+  54 48 102 55 51 57 49 101 99 54 48 54 100 50 54 51 49 101 54 100 53 51 49 53
+  55 57 48 54 100 98 102 38 105 112 110 95 109 111 100 101 61 104 109 97 99 38
+  105 112 110 95 116 121 112 101 61 116 114 97 110 115 102 101 114 38 105 112
+  110 95 118 101 114 115 105 111 110 61 49 46 48 38 109 101 114 99 104 97 110
+  116 61 54 57 56 57 48 54 51 98 99 53 101 48 102 52 51 99 49 51 57 102 56 100
+  100 102 101 48 101 55 49 100 98 57 38 115 116 97 116 117 115 61 50 38 115 116
+  97 116 117 115 95 116 101 120 116 61 67 111 109 112 108 101 116 101 38 116
+  120 110 95 105 100 61 67 84 70 70 51 84 77 74 73 57 79 74 65 73 74 56 83 83
+  77 74 86 75 69 66 72 74)
+CL-COINPAYMENTS> (parse-data *)
+(:AMOUNT "10.00000000" :AMOUNTI "1000000000" :CURRENCY "LTCT" :FEE "0.00000000"
+ :FEEI "0" :FIAT-AMOUNT "1108.03029150" :FIAT-AMOUNTI "110803029150" :FIAT-COIN
+ "GBP" :FROM "8ac9528d191f8fb3f5b9daa25538c4ae" :IPN-ID
+ "f60f7391ec606d2631e6d53157906dbf" :IPN-MODE "hmac" :IPN-TYPE "transfer" ... )
+ ```
+
+### Verifying the source
+
+coinpayment signs all its messages from the API with a HMAC header, with Hunchentoot you 
+can extract that header like so: 
+
+```lisp
+ (let* ((headers (tbnl:headers-in*))
+        (hmac (cdr (assoc :hmac headers))))
+     hmac)
+ ```
+ 
+Now using the method `(verify-data hmac private-key raw-post)`
+you can parse this header your IPN Secret, this is 
+not your API secret key but the key *you* provided as a 'secret' 
+"Your IPN Secret is a string of your choosing that is used to verify that an IPN was really sent from our servers "
+
+and either the parsed plist, the raw-data or a string consisting of post parameters like so:
+
+```lisp
+(hunchentoot:define-easy-handler (ipn :uri "/ipnreceiver" )
+    ()
+  (let* ((headers (tbnl:headers-in*))
+         (hmac (cdr (assoc :hmac headers)))
+         (raw-data (tbnl:raw-post-data))
+         (plist (cl-coinpayments::parse-data (tbnl:post-parameters*))))
+    (when (and (string= (getf plist :merchant) *coinpayment-merchant-id*)
+               (cl-coinpayments::verify-data hmac *coinpayment-ipn-secret*
+                                             raw-data))
+      (let ((status (cl-coinpayments:construct-status plist)))
+        (handler-case 
+            (cl-coinpayments:dispatch-ipn-by-name process plist status)
+          (cl-coinpayments:no-dispatcher-found (c)
+            (log:warn "Received an IPN that wasn't handled explicitly. Status: ~A~%IPN: ~A"
+                      (cl-coinpayments:status c)
+                      (cl-coinpayments:ipn c)))))))
+  "done")
+```
+
+In the above example I also confirm that my merchants ID and the merchants ID sent are
+the same.
+
+## Working with the IPN
+
+Now you have verified the legitimacy of your IPN you can construct a status object.
+
+```lisp
+CL-COINPAYMENTS> (construct-status *)
+#<TWO {10196A08D3}>
+(:AMOUNT "10.00000000" :AMOUNTI "1000000000" :CURRENCY "LTCT" :FEE "0.00000000"
+ :FEEI "0" :FIAT-AMOUNT "1108.03029150" :FIAT-AMOUNTI "110803029150" :FIAT-COIN
+ "GBP" :FROM "8ac9528d191f8fb3f5b9daa25538c4ae" :IPN-ID
+ "f60f7391ec606d2631e6d53157906dbf" :IPN-MODE "hmac" :IPN-TYPE "transfer"
+ :IPN-VERSION "1.0" :MERCHANT "oof" :STATUS "2" :STATUS-TEXT "Complete" :TXN-ID
+ "CTFF3TMJI9OJAIJ8SSMJVKEBHJ")
+ ```
+ 
+This returns two values, with the most easily referenced being the new status object.
+The status objects rules are described here: https://www.coinpayments.net/merchant-tools-ipn 
+Under the heading 'Payment Statuses'.
+If the status cannot be determined (which probably means the request is bogus) 
+the condition 'unknown-status is signalled.
+
+ If you look in classes.lisp you can see the 
+relationship between the status objects, CLOS is used to represent the relationship 
+described in those docs, so the class one-hundred is a subclass of ipn-payment-success
+and ipn-payment-success is a subclass of ipn-status etc, this is important for the next
+part.
+ 
+### Dispatching on statuses
+
+This library has a means of creating functions that are executed based on the 
+name of the dispatcher, the type of IPN sent from the server and the two main args the
+class of the STATUS object and the number of arguments.
+This is best demonstrated with an example:
+```lisp
+
+(def-ipn-dispatcher print-info ((foo :transfer) (ipn ipn-status) arg1)
+  (print foo)
+  (print ipn)
+  (print "less specific")
+  (print arg1))
+
+(def-ipn-dispatcher print-info ((foo :transfer) (ipn ipn-status) arg1 arg2)
+  (print foo)
+  (print ipn)
+  (print "less specific")
+  (print arg1)
+  (print arg2))
+
+(def-ipn-dispatcher print-info ((foo :transfer) (ipn two) arg1)
+  (print foo)
+  (print ipn)
+  (print "more specific"))
+
+(def-ipn-dispatcher print-info ((foo :transfer) (ipn two) arg1 arg2)
+  (print arg1)
+  (print arg2))
+
+  ```
+Some example inputs using the function `(ipn-dispatch name ipn status args)`
+```
+CL-COINPAYMENTS> (ipn-dispatch 'print-info '(:IPN-TYPE "transfer") (make-instance 'zero) "abc")
+
+(:IPN-TYPE "transfer") 
+#<ZERO {1025E64EB3}> 
+"less specific" 
+"abc" 
+"abc"
+
+
+CL-COINPAYMENTS> (ipn-dispatch 'print-info '(:IPN-TYPE "transfer") (make-instance 'zero) "abc" "deeef")
+
+(:IPN-TYPE "transfer") 
+#<ZERO {1025E852C3}> 
+"less specific" 
+"abc" 
+"deeef" 
+"deeef"
+
+
+CL-COINPAYMENTS> (ipn-dispatch 'print-info '(:IPN-TYPE "transfer") (make-instance 'two) "abc" "deeef")
+
+"abc" 
+"deeef" 
+"deeef"
+
+```
+I assume you get the jist. Anyway you can use this to perform actions based the same types 
+of IPN's but when they are in varying states.
+There is the macro `(dispatch-ipn-by-name name ipn status args)` which does the same 
+```lisp
+CL-COINPAYMENTS> (dispatch-ipn-by-name print-info '(:IPN-TYPE "transfer") (make-instance 'ipn-status) "abc" "def")
+
+(:IPN-TYPE "transfer") 
+#<IPN-STATUS {1025E8F173}> 
+"less specific" 
+"abc" 
+"def" 
+"def"
+```
+
+If a dispatcher cannot be found for the args provided then the condition 
+'no-dispatcher-found is signalled, you should wrap all calls to dispatch-ipn and 
+dispatch-ipn-by-name within a handler-case to make sure you have some fallback 
+functionality in the case the server sends something unexpected, which it has done for me...
+
+Just a note the list '(:IPN-TYPE "transfer") is the most basic of IPN's represented as a
+plist that is required for this to function, this is why it is used in the examples, in 
+a real world example the IPN would be what has been received and parsed by (parse-data ..)
+
+## Working with the API.
+
+In cl-coinpayments API requests are all represented by objects, so if you wish to make 
+an API call you instantiate an object of the request type, pass in the correct arguments
+as initargs and then call the method `(request <instance>)` on it. Its important to note
+that the :merchant-secret-key initarg is the special key *YOU* gave to coinpayments as your
+secret, not the API secret automatically generated and :key is your API public key.
+
+```lisp
+
+CL-COINPAYMENTS> (make-instance 'get-basic-info :merchant-secret-key *coinpayment-private* :key *coinpayment-public*)
+#<GET-BASIC-INFO {100230D643}>
+
+```
+This request has the following slots:
+```lisp
+[ ]  CMD                 = "get_basic_info"
+[ ]  DEX-ALIST           = (("version" . "1") ("key" . <removed for privacy>) ("cmd" . "get_basic_info") ("format" . "json"))
+[ ]  FORMAT              = "json"
+[ ]  HMAC                = "c776c7821d4d7c785c5971652e6139ab5499ca3f7af195e8bd4dc5b56aeae91be8185e42a98d2af843bfa8a88062ac76362a5759f2cbdc612b9a6ece2a37a478"
+[ ]  KEY                 = <removed for privacy>
+[ ]  MERCHANT-SECRET-KEY = <removed for privacy>
+[ ]  NONCE               = #<unbound>
+[ ]  POST-STRING         = "version=1&key=<removed for privacy>&cmd=get_basic_info&format=json"
+[ ]  REQUIRED            = (MERCHANT-SECRET-KEY KEY)
+[ ]  VERSION             = "1"
+```
+
+When a response is received it is parsed into either a good-response or bad-response object:
+```lisp
+CL-COINPAYMENTS> (make-instance 'get-basic-info :merchant-secret-key *coinpayment-private* :key *coinpayment-public*)
+#<GET-BASIC-INFO {101A377823}>
+CL-COINPAYMENTS> (request *)
+#<BAD-RESPONSE {101B67EC63}>
+CL-COINPAYMENTS> (make-instance 'currency-prices :merchant-secret-key *coinpayment-private* :key *coinpayment-public*)
+#<CURRENCY-PRICES {101B8E9323}>
+CL-COINPAYMENTS> (request *)
+#<GOOD-RESPONSE {101879EC63}>
+CL-COINPAYMENTS> 
+```
+The slots look like this:
+```lisp
+[ ]  DEX-EXTRA   = (:CODE 200 :HEADERS #<HASH-TABLE :TEST EQUAL :COUNT 11 {1001CF6FB3}> :URL #<QURI.URI.HTTP:URI-HTTPS https://www.coinpayments.net/api.php> :STREAM #<CL+SSL::SSL-STREAM for #<FD-STREAM for "socket 192.168.200.16:49534, peer: 205.220.231.4:443" {1001B3AF73}>>)
+[ ]  ERROR-SLOT  = "This API Key does not have permission to use that command!"
+[ ]  REQUEST     = #<GET-BASIC-INFO {10018804D3}>
+[ ]  RESULT-SLOT = NIL
+```
+All of the values returned by dex:post that are not directly used are stored in 
+DEX-EXTRA, RESULT-SLOT contains any parsed results, ERROR-SLOT will either be 'ok' or 
+a descriptive string, and REQUEST is the object used to send the request.
+
+All requests inherit their slots from the toplevel class `'request`, currently 
+the nonce is not used but if you wanted to use it you can, if you set the value to an 
+integer represented as a string then it will also be added into the post params and the HMAC.
+The same goes for if you modify any of the slots that are used for storing values 
+which are later used in the post request. You could change FORMAT to XML, however 
+that would probably break `(request ..)` so maybe dont do that.
+
+Each request within the docs https://www.coinpayments.net/apidoc-intro has its own class
+and they are all listed in api-forms.lisp. 
+If you try to make a request object without providing 'required' arguments then
+you will get an error of type `'required-slots-not-bound' 
+```lisp
+CL-COINPAYMENTS> (make-instance 'create-transfer :merchant-secret-key *coinpayment-private* :key *coinpayment-public* :amount "1" :currency "btc")
+; Debugger entered on #<REQUIRED-SLOTS-NOT-BOUND {1002506873}>
+[1] CL-COINPAYMENTS> 
+; Evaluation aborted on #<REQUIRED-SLOTS-NOT-BOUND {1002506873}>
+```
+
+I think that all of the API calls will work except maybe `create-mass-withdrawal` which 
+I have not tested but it has some odd characteristics, so dont rely on it to work. 
+If you do test it and find it doesn't work just open an issue and I'll fix it. 
+
+
+
+
+# Paypal 
+
+
+## latter-day-paypal
+Right now this is just a thin wrapper over the paypal api.
+
+### Dependencies
+
+You will need to git clone cl-tls from  https://github.com/shrdlu68/cl-tls and put it into your local-projects, this is for verifying webhooks.
+
+To adjust how jojo parses, set the parameter `*parse-as*` to either :hash-table or :plist,
+by default it is :plist to maintain backwards compatibility. 
+
+To adjust the content encoder, set the parameter `*json-encoder*` to a function, by 
+default it is `#'cl-json:encode-json-as-string`. 
+
+### Intro
+
+To get started you need to set `*client*` and `*secret*` to your client and secret. 
+Then call `get-token`. They are currently set to my old client and secret.
+
+```lisp
+LDP> *client*
+"ATiiZbWBH3_qd_y3P3AZQiQlBIh9mVTDSTtr4ALOPqfTd5eBZooqeJlLT0o6-HLF95_Vj2GADaIhp5Ee"
+LDP> *secret*
+"EMBuo5-J3kWfSEJYY5mtQd8Hm9JezbxjkUUJ2D9JwKwwas1E05Ejp4A1wlpNuuFd3YyIoKZrSxjs9OUb"
+LDP> (get-token)
+#<TWO-HUNDRED {100A51E5C3}>
+#<TOKEN {100A456B93}>
+LDP> 
+```
+This sets the value of `*token*`. 
+Now you have your token you can make requests. 
+```lisp
+LDP> (make-instance 'products%list)
+#<PRODUCTS%LIST {100BBA0F7B}>
+LDP> (call-api *)
+#<TWO-HUNDRED {100BD2E673}>
+LDP> (body *)
+(:|links|
+ ((:|method| "GET" :|rel| "self" :|href|
+   "https://api.sandbox.paypal.com/v1/catalogs/products?page_size=10&page=1"))
+ :|products| NIL)
+LDP> 
+```
+The result is wrapped in an object with its status code and text and a body slot that 
+contains the result. The same is true if it returns an error.
+The json is decoded using jonathan.
+
+### Token issues
+If you have failed to set token or it has expired
+```lisp
+LDP> (setf *token* nil)
+NIL
+LDP> (make-instance 'products%list)
+#<PRODUCTS%LIST {100BD37F5B}>
+LDP> (call-api *)
+; Debugger entered on #<UNBOUND-TOKEN {100BD3E133}>
+
+You have not evaluated 'get-token'.
+   [Condition of type UNBOUND-TOKEN]
+
+Restarts:
+ 0: [MISSING-TOKEN] Token could be broken, refresh and try again?
+```
+All requests made with `call-api` have the restart `missing-token` just in case your token expires. 
+
+```lisp
+#<PRODUCTS%LIST {100BD37F5B}>
+LDP> (handler-bind ((token-issue (lambda (c)
+                                   (declare (ignore c))
+                                   (invoke-restart 'missing-token))))
+       (call-api *))
+#<TWO-HUNDRED {1003A50663}>
+LDP> (body *)
+(:|links|
+ ((:|method| "GET" :|rel| "self" :|href|
+   "https://api.sandbox.paypal.com/v1/catalogs/products?page_size=10&page=1"))
+ :|products| NIL)
+LDP> 
+```
+
+### Errors
+All conditions are subclasses of `paypal-api-condition` see conditions.lisp
+```lisp
+LDP> (handler-case (call-api *)
+       (condition (c)
+         c))
+#<FOUR-HUNDRED-FOUR Status: 404.
+Status Text: Not Found.
+Body: NIL {10040F0083}>
+LDP> 
+```
+
+### Adding headers
+
+Some calls accept other headers like Paypal-Request-Id to add these headers to a request lexically bind the variable `*request-headers*`
+
+```lisp
+#<PRODUCTS%LIST {101130BC0B}>
+LDP> (let ((*request-headers* '(("Paypal-Auth-Assertion" . "imauthassertion"))))
+       (declare (special *request-headers*))
+       <request> 
+       <call-api>)
+```
+Headers are sent using Dex so they have to be a properly formed alist like above.
+You can see the additional headers in the paypal dev docs.
+
+### Testing 
+By default the API URL used is the sandbox url, to go live set `*testing*` to non nil.
+```lisp
+LDP> *testing*
+T
+```
+
+### Encoding
+
+All encoding is done with cl-json. So the easiest way to create JSON objects is to use 
+a hash-table. There is a helper function called `%quick-hash` to generate a hash-table from an alist
+```lisp
+LDP> (cl-json:encode-json-to-string (%quick-hash '(("abc" . "def"))))
+"{\"abc\":\"def\"}"
+LDP> 
+```
+Patch requests take an array:
+
+```lisp
+LDP> (make-array 1 :initial-element (%quick-hash '(("abc" . "def"))))
+#(#<HASH-TABLE :TEST EQL :COUNT 1 {100BED8343}>)
+LDP> (cl-json:encode-json-to-string *)
+"[{\"abc\":\"def\"}]"
+LDP> 
+```
+
+### Patch requests
+
+A lot of the requests that update are patch requests which accept objects. When you are using make-instance you will see a slot called 'patch-request, put your request data in this.
+
+### Requests that have a json body
+
+Most requests (put/post) have a body, to provide this data use the :content slot. 
+
+### Query parameters
+
+Query parameters are slots within the object, just set them and the ones that are bound will be encoded and added onto the end of the URL.
+
+### Path parameters
+
+Path parameters are slots within the request object, just set the slots and they will be automatically encoded into the URL.
+
+## Webhook verification
+To verify the signature of a paypal request there are two methods you can use. 
+`(ldp:verify-webhook )` this takes `algo cert-url transmission-signature transmission-id timestamp webhook-id raw-body` algo is a keyword generated with `%algo->key` its simply the string converted to a keyword.
+Or you can use 
+`(ldp:verify-paypal-webhook)` which takes `webhook-id request raw-body` this is a method that will dispatch on REQUEST, and currently only works with a hunchentoot request object like so: 
+```lisp
+(hunchentoot:define-easy-handler (paypal-payment-processor
+                                  :uri <your webhook url>
+                                  :default-request-type :POST)
+    ()
+  (let* ((raw-data (tbnl:raw-post-data :force-binary t)))
+    (if (ldp:verify-paypal-webhook (if *testing*
+                                       "your testing webhook id"
+                                       "Your live webhook id")
+                                   tbnl:*request* raw-data)
+        (let ((plist (jojo:parse (babel:octets-to-string raw-data))))
+          (setf (tbnl:return-code*) 200)
+          <your processing method> 
+          "t")
+        (progn (setf (tbnl:return-code*) 400)
+               "nil"))))
+```
+If you are using a server that is not Hunchentoot then you can just extract the header values and pass them to `(ldp:verify-webhook)`, this is all the method `ldp:verify-paypal-webhook` is doing under the hood. 
+
+
+
+# Stripe
+
+This is a an implementation of the Stripe API. 
+
+Currently have wrapped the section Core Resources and under Products the products, prices and shipping then, under Checkout the sessions and finally under Webhooks the webhooks. 
+
+## How to 
+To change the default parser from jojo's plist to a hash-table change `*parse-as*` to 
+a valid (jojo:parse <content> :as <key>), I suggest :hash-table
+
+
+First you have to set `*api-key*` to your api key from stripe, you can do this lexically ofcourse. Best run a few tests, so use your test keys first.
+
+Then you simply do the following:
+
+```lisp 
+SATMW> (make-instance 'events%all)
+#<EVENTS%ALL {100F16210B}>
+SATMW> (call-api *)
+(:|url| "/v1/events" :|has_more| NIL :|data| NIL :|object| "list")
+```
+Jonathan is used for parsing. 
+Any API error is caught and converted into a condition as per the Stripe documentation. 
+
+If you have a call that requires an argument like an `:id` in the path then there will be a slot by that name which you fill on creation.
+
+```lisp
+SATMW> (make-instance 'events%id :id "abc")
+#<EVENTS%ID {100F182A7B}>
+SATMW> (call-api *)
+<invalid-request-error because no known id>
+```
+If you have a post request that requires values then these requests have a slot called `content` that you fill with an ALIST.
+```lisp
+SATMW> (make-instance 'charges%create :content '(("amount" . 100)("currency" . "gbp")("source" . "abc")))
+#<CHARGES%CREATE {100F4CF67B}>
+```
+Dexador is used to send the requests so it must be a properly formed ALIST.
+
+## Alist construct
+In `src/helpers.lisp` I have built a very simple DSL which will parse into an alist, you can pass the result of evaluating this as the :content key to dex:post. 
+```lisp
+(defparameter *test* 
+  '(("fur" . "fluffy")
+    ("cat" . "dog")
+    (:array "woofers"
+     ("dog" "wolf")
+     (("smol" . "shih-tzu")
+      ("big" . "labrador")))
+    (:array "animals"
+     (("oof" . "doof")
+      ("kaboof" . "foo"))
+     ("dog"
+      "cat"
+      "bird"))
+    (:array "images"
+     (("fur" . "fluffy")
+      ("colour" . "brown")))
+    ("fur" . "fluffy")
+    ("colour" . "brown")))
+
+SATMW> (ec *test*)
+(("fur" . "fluffy") ("cat" . "dog") ("woofers[0]" . "dog")
+ ("woofers[1]" . "wolf") ("woofers[2][smol]" . "shih-tzu")
+ ("woofers[2][big]" . "labrador") ("animals[0][oof]" . "doof")
+ ("animals[0][kaboof]" . "foo") ("animals[1]" . "dog") ("animals[2]" . "cat")
+ ("animals[3]" . "bird") ("images[0][fur]" . "fluffy")
+ ("images[0][colour]" . "brown") ("fur" . "fluffy") ("colour" . "brown"))
+ ```
+ It accepts an arbitrary number of lists and appends them together. 
+ The DSL means you can create an alist that will correctly format as a form-url encoded string, this is annoying but its how Stripe handles requests...
+ 
+Supports nested arrays although I've never tested it.
+```lisp
+(defparameter *test2* 
+  '(("fur" . "fluffy")
+    ("cat" . "dog")
+    (:array "animals"
+     (("oof" . "doof")
+      ("kaboof" . "foo"))
+     ("dog"
+      "cat"
+      "bird"))
+    (:array "images"
+     (("fur" . "fluffy")
+      ("colour" . "brown"))
+     (:array "nested-images"
+      (("fluff" . "fluffy"))
+      ("pos" "foo" "bar")))
+    (:array "cats"
+     ("brown" "white" "black"))
+    ("fur" . "fluffy")
+    ("colour" . "brown")))
+
+SATMW> (ec *test2*)
+(("fur" . "fluffy") ("cat" . "dog") ("animals[0][oof]" . "doof")
+ ("animals[0][kaboof]" . "foo") ("animals[1]" . "dog") ("animals[2]" . "cat")
+ ("animals[3]" . "bird") ("images[0][fur]" . "fluffy")
+ ("images[0][colour]" . "brown") ("images[1][0][fluff]" . "fluffy")
+ ("images[1][1]" . "pos") ("images[1][2]" . "foo") ("images[1][3]" . "bar")
+ ("cats[0]" . "brown") ("cats[1]" . "white") ("cats[2]" . "black")
+ ("fur" . "fluffy") ("colour" . "brown"))
+```
+`ec` now also accepts hash-tables and will attempt to convert them into the correctly encoded format for Stripe. You can even combine lists written in the basic DSL I wrote with hash-tables to produce one large alist to pass to Stripe.
+## Webhooks
+
+To verify the webhooks from Stripe you need to follow the instructions here:
+https://stripe.com/docs/webhooks/signatures
+
+Extract the raw-body, the signature (v1), and the timestamp then 
+pass them as arguments to `verify-signature`. This returns a boolean (t or nil) 
+to tell you if it validated and the time difference between the timestamp received 
+and `local-time:now`
+
+There is currently one build in method to validate instances `lack.request:request`
+these are the wrappers created by Ningle (which uses clack and lack), so you can `verify-webhook` with `ningle:*request*` and your signing secret. See `./api/webhooks.lisp` to see how to implement verification for other servers.
+
+An example of `verify-webhook` with Ningle:
+```lisp
+(setf (ningle/app:route *app* *stripe-webhook* :method :post)
+      (lambda (params)
+        (declare (ignore params))
+        (multiple-value-bind (validp time-dif raw)
+            (satmw:verify-webhook *stripe-webhook-signing-secret* ningle:*request*)
+          (if (validate-webhook :stripe validp time-dif)
+              "fail"
+              (let* ((parsed (jojo:parse (babel:octets-to-string raw)
+                                         :as :hash-table)))
+                (process-webhook :stripe parsed))))))
+```
