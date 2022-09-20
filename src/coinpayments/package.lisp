@@ -1,6 +1,6 @@
 (defpackage #:lisp-pay/coinpayments
   (:use #:cl #:lisp-pay)
-  (:nicknames #:coin #:coinpayments)
+  (:nicknames #:coin #:coinpayments #:cl-coinpayments)
   (:export #:ipn-status
            #:ipn-failure
            #:ipn-payment-pending

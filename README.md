@@ -3,7 +3,12 @@
 ## Wrapper over multiple Payment Processor API's
 
 Current: Paypal, Stripe, Coinpayment
+
 Coming: BTCPayserver
+
+
+I would like to make many things like Webhook verification generic. 
+I would like to make responses as generic as possible, currently this is possible with Coinpayments and Paypal, but I implemented Stripe responses as conditions... Perhaps I should do the same with the others. 
 
 
 # Coinpayments

@@ -2,9 +2,6 @@
 
 (defparameter *sig-cache* (make-hash-table :test #'equal))
 
-(defun %crc-event (raw-body)
-  (ironclad:octets-to-integer (ironclad:digest-sequence :crc32 raw-body)))
-
 (defun %get-rsa-public-key (cert-url)
   (cl-tls:x509-decode
    (cdar (cl-tls::parse-pem
@@ -55,7 +52,7 @@
 
 (defmethod verify-webhook (algo cert-url transmission-signature transmission-id
                            timestamp webhook-id raw-body)
-  (let* ((crc (%crc-event raw-body))
+  (let* ((crc (crc-raw raw-body))
          (key (cert->public-key algo cert-url))
          (message (%generate-signature-bytes
                    transmission-id timestamp webhook-id crc)))
@@ -73,7 +70,7 @@ around #'verify-webhook which extracts the extracts the required information fro
 headers."))
 
 (defmethod verify-paypal-webhook (webhook-id (request hunchentoot:request) raw-body)
-  (let* ((headers (tbnl:headers-in request))
+  (let* ((headers (request-headers request))
          (auth-algo (%algo->key (cdr (assoc :paypal-auth-algo headers))))
          (transmission-sig (cdr (assoc :paypal-transmission-sig headers)))
          (cert-url (cdr (assoc :paypal-cert-url headers)))
@@ -83,9 +80,9 @@ headers."))
                     transmission-time webhook-id raw-body)))
 
 (defmethod verify-paypal-webhook (webhook-id (request lack.request:request) raw-body)
-  (let* ((headers (lack.request:request-headers request))
+  (let* ((headers (request-headers request))
          (auth-algo (%algo->key (gethash "paypal-auth-algo" headers)))
-         (transmission-sig(gethash "paypal-transmission-sig" headers))
+         (transmission-sig (gethash "paypal-transmission-sig" headers))
          (cert-url (gethash "paypal-cert-url" headers))
          (transmission-id (gethash "paypal-transmission-id" headers))
          (transmission-time (gethash "paypal-transmission-time" headers)))

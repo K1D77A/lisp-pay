@@ -1,6 +1,6 @@
 (in-package #:lisp-pay/paypal)
 
-(defclass response ()
+(defclass paypal-response (response)
   ((body
     :accessor body
     :initarg :body

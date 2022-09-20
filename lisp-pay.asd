@@ -13,6 +13,7 @@
                #:dexador
                #:lack
                #:ningle
+               #:cl-base64
                #:cl-tls
                #:hunchentoot
                #:closer-mop
@@ -21,6 +22,9 @@
   :pathname "src"
   :components ((:file "package")
                (:file "conditions")
+               (:file "helpers")
+               (:file "protocol")
+               (:file "mop")
                (:file "lisp-pay")
                (:module "stripe"
                 :components ((:file "package")

@@ -23,7 +23,7 @@ you will have to repeat whats in required in params. Also if you were to add som
 new API that I didn't see then where they use a case like abc_def you can just
 use symbols like abc-def because they are automatically translated to the 
 correct case, dont worry this is memoized to make it faster."
-  `(progn (defclass ,name (request)
+  `(progn (defclass ,name (coinpayment-request)
             ((cmd :initform ,cmd)
              (required :initform ',(append required '(merchant-secret-key key)))
              ,@(loop :for param :in params
@@ -34,7 +34,7 @@ correct case, dont worry this is memoized to make it faster."
             )
           (export '(,name ,@params) 'lisp-pay/coinpayments)))
 
-(defmethod initialize-instance :after ((request request)
+(defmethod initialize-instance :after ((request coinpayment-request)
                                        &rest initargs &key &allow-other-keys)
   "After initialization this confirms that all required slots have been filled, 
 computes the alist for the post request which is passed to dex:post, computes a 
@@ -47,14 +47,14 @@ and then finally computes that hmac header."
   (compute-post-params request)
   (compute-final-hmac request))
 
-(defmethod convert-merchant-secret-key (request)
+(defmethod convert-merchant-secret-key ((request coinpayment-request))
   (with-accessors ((key merchant-secret-key))
       request
     (when (stringp key)
       (make-array (length key) :element-type '(unsigned-byte 8)
                                :initial-contents (babel:string-to-octets key)))))
 
-(defmethod validate-slots ((request request))
+(defmethod validate-slots ((request coinpayment-request))
   "When an instance of REQUEST is initialized, afterwards this will guarantee that 
 all of the slots that are required for that api call have been set. If any haven't
 then signals a condition of type 'required-slots-not-bound."
@@ -87,7 +87,7 @@ then signals a condition of type 'required-slots-not-bound."
      (make-array (length str) :element-type '(unsigned-byte 8)
                               :initial-contents str))))
 
-(defmethod compute-dex-alist ((request request))
+(defmethod compute-dex-alist ((request coinpayment-request))
   "This function must be called before 'compute-dex-alist. This computes the 
 alist used as the :content key to dex:post, it loops through all the slots in the class
 and creates an alist from their slotname and values, it ignores slots that are 
@@ -103,7 +103,7 @@ any of '(dex-alist required merchant-secret-key) or are unbound."
                                  (slot-value request name))))
     request))
 
-(defmethod compute-post-params ((request request))
+(defmethod compute-post-params ((request coinpayment-request))
   "This function must be called before 'compute-final-hmac. This computes a 'post string'
 that can be used for computing the hmac. It uses the dex-alist values as its arguments."
   (let* ((stream (make-string-output-stream)))
@@ -113,14 +113,14 @@ that can be used for computing the hmac. It uses the dex-alist values as its arg
       (setf (post-string request) (subseq post 0 (1- (length post))))))
   request)
 
-(defmethod compute-final-hmac ((request request))
+(defmethod compute-final-hmac ((request coinpayment-request))
   "This function is the last step in initializing a request object, it computes the 
 final HMAC from the merchant-secret-key and the post-string which was previously generated."
   (setf (hmac request)
         (compute-hmac (merchant-secret-key request) (post-string request)))
   request)
 
-(defmethod request ((request request))
+(defmethod request ((request coinpayment-request))
   "When given a constructed REQUEST object, attempts to use the object to make 
 a request to the coinpayments API. If successfully returns a 'good-response object,
 if there was a failure with your values then returns a 'bad-response object. 

@@ -1,7 +1,6 @@
 (in-package #:lisp-pay/coinpayments)
 
-
-(defclass response ()
+(defclass coinpayment-response (response)
   ((error-slot
     :accessor error-slot
     :initarg :error-slot
@@ -32,7 +31,7 @@
             (when (slot-boundp obj 'error-slot)
               (error-slot obj)))))
 
-(defclass request ()
+(defclass coinpayment-request ()
   ((version
     :accessor version
     :initarg :version
