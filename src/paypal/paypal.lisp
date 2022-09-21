@@ -4,48 +4,48 @@
 
 
 ;;;tracking
-(defapi tracking%update-or-cancel ("/v1/shipping/trackers/:id" put-r)
+(defapi tracking%update-or-cancel ("/v1/shipping/trackers/:id" put-request)
         ())
 
-(defapi tracking%information ("/v1/shipping/trackers/:id" get-r)
+(defapi tracking%information ("/v1/shipping/trackers/:id" get-request)
         ())
 
-(defapi tracking%batch ("/v1/shipping/trackers-batch" post-r)
+(defapi tracking%batch ("/v1/shipping/trackers-batch" post-request)
         ())
 
 ;;;billing
 
-(defapi billing%create ("/v1/payments/billing-agreements" post-r)
+(defapi billing%create ("/v1/payments/billing-agreements" post-request)
         ())
 
-(defapi billing%update ("/v1/payments/billing-agreements/:agreement-id" patch-r)
+(defapi billing%update ("/v1/payments/billing-agreements/:agreement-id" patch-request)
         ())
 
-(defapi billing%information ("/v1/payments/billing-agreements/:agreement-id" get-r)
+(defapi billing%information ("/v1/payments/billing-agreements/:agreement-id" get-request)
         ())
 
 (defapi billing%bill-balance
-    ("/v1/payments/billing-agreements/:agreement-id/balance" post-r)
+    ("/v1/payments/billing-agreements/:agreement-id/balance" post-request)
     ())
 
 (defapi billing%cancel
-    ("/v1/payments/billing-agreements/:agreement-id/cancel" post-r)
+    ("/v1/payments/billing-agreements/:agreement-id/cancel" post-request)
     ())
 
 (defapi billing%re-activate
-    ("/v1/payments/billing-agreements/:agreement-id/re-activate" post-r)
+    ("/v1/payments/billing-agreements/:agreement-id/re-activate" post-request)
     ())
 
 (defapi billing%set-balance
-    ("/v1/payments/billing-agreements/:agreement-id/set-balance" post-r)
+    ("/v1/payments/billing-agreements/:agreement-id/set-balance" post-request)
     ())
 
 (defapi billing%suspend
-    ("/v1/payments/billing-agreements/:agreement-id/suspend" post-r)
+    ("/v1/payments/billing-agreements/:agreement-id/suspend" post-request)
     ())
 
 (defapi billing%list-transactions
-    ("/v1/payments/billing-agreements/:agreement-id/transactions" get-r-query)
+    ("/v1/payments/billing-agreements/:agreement-id/transactions" get-request)
     ((start_date
       :accessor start-date
       :initarg start-date)
@@ -54,11 +54,11 @@
       :initarg :end-date)))
 
 (defapi billing%execute
-    ("/v1/payments/billing-agreements/:agreement-id/agreement-execute" post-r)
+    ("/v1/payments/billing-agreements/:agreement-id/agreement-execute" post-request)
     ())
 
 ;;;catalog products
-(defapi products%list ("/v1/catalogs/products" get-r-query)
+(defapi products%list ("/v1/catalogs/products" get-request)
         ((page_size
           :accessor page-size
           :initarg :page-size)
@@ -69,19 +69,19 @@
           :accessor total-requried
           :initarg :total-required)))
 
-(defapi products%create ("/v1/catalogs/products" post-r)
+(defapi products%create ("/v1/catalogs/products" post-request)
         ())
 ;;has the extra header Prefer and Paypal-Request-Id
 
-(defapi products%update ("/v1/catalogs/products/:product-id" patch-r)
+(defapi products%update ("/v1/catalogs/products/:product-id" patch-request)
         ())
 
-(defapi products%details ("/v1/catalogs/products/:product-id" get-r)
+(defapi products%details ("/v1/catalogs/products/:product-id" get-request)
         ())
 
 
 ;;;disputes
-(defapi disputes%get ("/v1/customer/disputes" get-r-query)
+(defapi disputes%get ("/v1/customer/disputes" get-request)
         ((start_time
           :accessor start-time
           :initarg :start-time)
@@ -104,100 +104,100 @@
           :accessor update-time-after
           :initarg :update-time-after)))
 
-(defapi disputes%update ("/v1/customer/disputes/:dispute-id" patch-r)
+(defapi disputes%update ("/v1/customer/disputes/:dispute-id" patch-request)
         ())
 
-(defapi disputes%details ("/v1/customer/disputes/:dispute-id" get-r)
+(defapi disputes%details ("/v1/customer/disputes/:dispute-id" get-request)
         ())
 
 ;;;dispute-actions
 
 (defapi disputes-actions%accept-claim ("/v1/customer/disputes/:dispute-id/accept-claim"
-                                       post-r)
+                                       post-request)
         ())
 
 (defapi disputes-actions%accept-resolve ("/v1/customer/disputes/:dispute-id/accept-offer"
-                                         post-r)
+                                         post-request)
         ())
 
 (defapi disputes-actions%acknowledge-return
     ("/v1/customer/disputes/:dispute-id/acknowledge-return-item"
-     post-r)
+     post-request)
     ())
 
 (defapi disputes-actions%adjudicate 
     ("/v1/customer/disputes/:dispute-id/adjudicate"
-     post-r)
+     post-request)
     ());;for sandbox use only
 
 (defapi disputes-actions%appeal
     ("/v1/customer/disputes/:dispute-id/appeal"
-     post-files-r)
+     post-files-request)
     ())
 
 (defapi disputes-actions%deny-resolve
     ("/v1/customer/disputes/:dispute-id/deny-offer"
-     post-r)
+     post-request)
     ())
 
 (defapi disputes-actions%escalate
     ("/v1/customer/disputes/:dispute-id/escalate"
-     post-r)
+     post-request)
     ())
 
 (defapi disputes-actions%offer-resolve
     ("/v1/customer/disputes/:dispute-id/make-offer"
-     post-r)
+     post-request)
     ())
 
 (defapi disputes-actions%provide-evidence
     ("/v1/customer/disputes/:dispute-id/provide-evidence"
-     post-files-r)
+     post-files-request)
     ())
 
 (defapi disputes-actions%provide-supporting-info
     ("/v1/customer/disputes/:dispute-id/provide-supporting-info"
-     post-files-r)
+     post-files-request)
     ());;this wont work if you only want to upload notes.
 
 (defapi disputes-actions%require-evidence
     ("/v1/customer/disputes/:dispute-id/require-evidence"
-     post-r)
+     post-request)
     ());;sandbox only
 
 (defapi disputes-actions%send-message
     ("/v1/customer/disputes/:dispute-id/send-message"
-     post-files-r)
+     post-files-request)
     ())
 ;;;the way to make these api calls that accept either files or json would be to
 ;;;set the content-type to your desired then change-class into either post-files-r
-;;;which will send the data as multipart-form or post-r which will send it as
+;;;which will send the data as multipart-form or post-request which will send it as
 ;;;json
 
 ;;;identity
 
-(defapi identity-userinfo&profile-info ("/v1/identity/oauth2/userinfo" get-r-query)
+(defapi identity-userinfo&profile-info ("/v1/identity/oauth2/userinfo" get-request)
         ((schema
           :accessor schema
           :initarg :schema)))
 
-(defapi identity-applications%create ("/v1/identity/applications" post-r)
+(defapi identity-applications%create ("/v1/identity/applications" post-request)
         ())
 
-(defapi identity-account%set-properties ("/v1/identity/account-settings" post-r)
+(defapi identity-account%set-properties ("/v1/identity/account-settings" post-request)
         ())
 
 (defapi identity-account%disable-properties
-    ("/v1/identity/account-settings/deactivate" post-r)
+    ("/v1/identity/account-settings/deactivate" post-request)
     ())
 
 ;;;invoices
 
 (defapi invoices%generate-invoice-number ("/v2/invoicing/generate-next-invoice-number"
-                                          post-r)
+                                          post-request)
         ())
 
-(defapi invoices%list ("/v2/invoicing/invoices" get-r-query)
+(defapi invoices%list ("/v2/invoicing/invoices" get-request)
         ((page_size
           :accessor page-size
           :initarg :page-size)
@@ -212,15 +212,15 @@
           :initarg :fields)))
 
 (defapi invoices%create-draft ("/v2/invoicing/invoices"
-                               post-r)
+                               post-request)
         ())
 
 (defapi invoices%delete ("/v2/invoicing/invoices/:invoice-id"
-                         delete-r)
+                         delete-request)
         ())
 
 (defapi invoices%update-invoice ("/v2/invoicing/invoices/:invoice-id"
-                                 put-query-r)
+                                 put-request)
         ((send_to_recipient
           :accessor send-to-recipient
           :initarg :send-to-recipient)
@@ -229,47 +229,47 @@
           :initarg :send-to-invoicer)))
 
 (defapi invoices%details ("/v2/invoicing/invoices/:invoice-id"
-                          get-r)
+                          get-request)
         ())
 
 (defapi invoices%cancel ("/v2/invoicing/invoices/:invoice-id/cancel"
-                         post-r)
+                         post-request)
         ())
 
 (defapi invoices%generate-qr-code ("/v2/invoicing/invoices/:invoice-id/generate-qr-code"
-                                   post-r)
+                                   post-request)
         ())
 
 (defapi invoices%record-payment ("/v2/invoicing/invoices/:invoice-id/payments"
-                                 post-r)
+                                 post-request)
         ())
 
 (defapi invoices%delete-external-payment
     ("/v2/invoicing/invoices/:invoice-id/payments/:transaction-id"
-     delete-r)
+     delete-request)
     ())
 
 (defapi invoices%record-refund
     ("/v2/invoicing/invoices/:invoice-id/refunds"
-     post-r)
+     post-request)
     ())
 
 (defapi invoices%delete-external-refund
     ("/v2/invoicing/invoices/:invoice-id/refunds/:transaction-id"
-     delete-r)
+     delete-request)
     ())
 
 (defapi invoices%remind
     ("/v2/invoicing/invoices/:invoice-id/remind"
-     post-r)
+     post-request)
     ())
 
 (defapi invoices%send
     ("/v2/invoicing/invoices/:invoice-id/send"
-     post-r)
+     post-request)
     ());;has the Paypal-Request-Id header
 
-(defapi invoices%search ("/v2/invoicing/search-invoices" post-query-r)
+(defapi invoices%search ("/v2/invoicing/search-invoices" post-request)
         ((page_size
           :accessor page-size
           :initarg :page-size)
@@ -280,7 +280,7 @@
           :accessor total-requried
           :initarg :total-required)))
 
-(defapi invoices-templates%list ("/v2/invoicing/templates" get-r-query)
+(defapi invoices-templates%list ("/v2/invoicing/templates" get-request)
         ((page_size
           :accessor page-size
           :initarg :page-size)
@@ -291,109 +291,109 @@
           :accessor fields
           :initarg :fields)))
 
-(defapi invoices-templates%create ("/v2/invoicing/templates" post-r)
+(defapi invoices-templates%create ("/v2/invoicing/templates" post-request)
         ())
 
-(defapi invoices-templates%delete ("/v2/invoicing/templates/:template-id" delete-r)
+(defapi invoices-templates%delete ("/v2/invoicing/templates/:template-id" delete-request)
         ())
 
-(defapi invoices-templates%update ("/v2/invoicing/templates/:template-id" put-r)
+(defapi invoices-templates%update ("/v2/invoicing/templates/:template-id" put-request)
         ())
 
-(defapi invoices-templates%details ("/v2/invoicing/templates/:template-id" get-r)
+(defapi invoices-templates%details ("/v2/invoicing/templates/:template-id" get-request)
         ())
 
 
 ;;;orders
 
-(defapi orders%create ("/v2/checkout/orders" post-r)
+(defapi orders%create ("/v2/checkout/orders" post-request)
         ());;has the request-id partner-att client-metadata and prefer headers if wanted
 
-(defapi orders%update ("/v2/checkout/orders/:order-id" patch-r)
+(defapi orders%update ("/v2/checkout/orders/:order-id" patch-request)
         ())
 
-(defapi orders%details ("/v2/checkout/orders/:order-id" get-r)
+(defapi orders%details ("/v2/checkout/orders/:order-id" get-request)
         ((fields
           :accessor fields
           :initarg :fields)))
 
-(defapi orders%authorize ("/v2/checkout/orders/:order-id/authorize" post-r)
+(defapi orders%authorize ("/v2/checkout/orders/:order-id/authorize" post-request)
         ());;has the request-id metadata prefer auth-assertion
 
 
-(defapi orders%capture ("/v2/checkout/orders/:order-id/capture" post-r)
+(defapi orders%capture ("/v2/checkout/orders/:order-id/capture" post-request)
         ());;has the request-id prefer metadata auth-assertion
 
 
 ;;;partner referrals
 
-(defapi partner%create ("/v2/customer/partner-referrals" post-r)
+(defapi partner%create ("/v2/customer/partner-referrals" post-request)
         ())
 
-(defapi partner%get-data ("/v2/customer/partner-referrals/:referral-id" get-r)
+(defapi partner%get-data ("/v2/customer/partner-referrals/:referral-id" get-request)
         ())
 
 
 ;;;payment-experience
 
-(defapi web-profiles%list ("/v1/payment-experience/web-profiles" get-r)
+(defapi web-profiles%list ("/v1/payment-experience/web-profiles" get-request)
         ())
 
-(defapi web-profiles%create ("/v1/payment-experience/web-profiles" post-r)
+(defapi web-profiles%create ("/v1/payment-experience/web-profiles" post-request)
         ());;has request-id
 
-(defapi web-profiles%delete ("/v1/payment-experience/web-profiles/:profile-id" delete-r)
+(defapi web-profiles%delete ("/v1/payment-experience/web-profiles/:profile-id" delete-request)
         ())
 
-(defapi web-profiles%update ("/v1/payment-experience/web-profiles/:profile-id" patch-r)
+(defapi web-profiles%update ("/v1/payment-experience/web-profiles/:profile-id" patch-request)
         ())
 
 (defapi web-profiles%partial-update
-    ("/v1/payment-experience/web-profiles/:profile-id" patch-r)
+    ("/v1/payment-experience/web-profiles/:profile-id" patch-request)
     ())
 
 (defapi web-profiles%details
-    ("/v1/payment-experience/web-profiles/:profile-id" get-r)
+    ("/v1/payment-experience/web-profiles/:profile-id" get-request)
     ())
 
 ;;;payments
 
 (defapi payments-authorization%details
-    ("/v2/payments/authorizations/:authorization-id" get-r)
+    ("/v2/payments/authorizations/:authorization-id" get-request)
     ())
 
 (defapi payments-authorization%capture
-    ("/v2/payments/authorizations/:authorization-id/capture" post-r)
+    ("/v2/payments/authorizations/:authorization-id/capture" post-request)
     ());;has request id and prefer
 
 (defapi payments-authorization%reauthorize
-    ("/v2/payments/authorizations/:authorization-id/reauthorize" post-r)
+    ("/v2/payments/authorizations/:authorization-id/reauthorize" post-request)
     ());;has request id and prefer
 
 (defapi payments-authorization%void
-    ("/v2/payments/authorizations/:authorization-id/void" post-r)
+    ("/v2/payments/authorizations/:authorization-id/void" post-request)
     ());;has auth assertion
 
 (defapi payments-captures%details
-    ("/v2/payments/captures/:capture-id" get-r)
+    ("/v2/payments/captures/:capture-id" get-request)
     ());;has auth assertion
 
 (defapi payments-captures%refund
-    ("/v2/payments/captures/:capture-id/refund" post-r)
+    ("/v2/payments/captures/:capture-id/refund" post-request)
     ());;has request-id prefer auth-assertion
 
 (defapi payments-refunds%details
-    ("/v2/payments/refunds/:refund-id" get-r)
+    ("/v2/payments/refunds/:refund-id" get-request)
     ())
 
 ;;;payouts
 
 (defapi payouts-batch%create
-    ("/v1/payments/payouts" post-r)
+    ("/v1/payments/payouts" post-request)
     ());has request-id
 
 (defapi payouts-batch%details
-    ("/v1/payments/payouts/:batch-id" get-r)
+    ("/v1/payments/payouts/:batch-id" get-request)
     ((page_size
       :accessor page-size
       :initarg :page-size)
@@ -408,21 +408,21 @@
       :initarg :total-required)))
 
 (defapi payouts-item%details
-    ("/v1/payments/payouts-item/:payout-id" get-r)
+    ("/v1/payments/payouts-item/:payout-id" get-request)
     ())
 
 (defapi payouts-item%cancel-unclaimed
-    ("/v1/payments/payouts-item/:payout-id/cancel" post-r)
+    ("/v1/payments/payouts-item/:payout-id/cancel" post-request)
     ())
 
 ;;;reference payouts
 
 (defapi referenced-payouts-batch%create
-    ("/v1/payments/referenced-payouts" post-r)
+    ("/v1/payments/referenced-payouts" post-request)
     ());has partner-attribution request-id prefer 
 
 (defapi referenced-payouts-batch%details
-    ("/v1/payments/referenced-payouts/:batch-id" get-r)
+    ("/v1/payments/referenced-payouts/:batch-id" get-request)
     ((page_size
       :accessor page-size
       :initarg :page-size)
@@ -437,15 +437,15 @@
       :initarg :total-required)))
 
 (defapi referenced-payouts-item%create
-    ("/v1/payments/referenced-payouts-items" post-r)
+    ("/v1/payments/referenced-payouts-items" post-request)
     ());;partner-attribution request-id prefer
 
 (defapi referenced-payouts-item%cancel-unclaimed
-    ("/v1/payments/referenced-payouts-items/:payout-id" get-r)
+    ("/v1/payments/referenced-payouts-items/:payout-id" get-request)
     ());;has partner-attribution
 
 ;;;subscriptions
-(defapi subscriptions-plans%list ("/v1/billing/plans" get-r)
+(defapi subscriptions-plans%list ("/v1/billing/plans" get-request)
         ((page_size
           :accessor page-size
           :initarg :page-size)
@@ -462,51 +462,51 @@
           :accessor total-required
           :initarg :total-required)))
 
-(defapi subscribtions-plans%create ("/v1/billing/plans" post-r)
+(defapi subscribtions-plans%create ("/v1/billing/plans" post-request)
         ());;has prefer request-id
 
-(defapi subscribtions-plans%update ("/v1/billing/plans/:plan-id" patch-r)
+(defapi subscribtions-plans%update ("/v1/billing/plans/:plan-id" patch-request)
         ())
 
-(defapi subscribtions-plans%details ("/v1/billing/plans/:plan-id" get-r)
+(defapi subscribtions-plans%details ("/v1/billing/plans/:plan-id" get-request)
         ())
 
-(defapi subscribtions-plans%activate ("/v1/billing/plans/:plan-id/activate" post-r)
+(defapi subscribtions-plans%activate ("/v1/billing/plans/:plan-id/activate" post-request)
         ())
 
-(defapi subscribtions-plans%deactivate ("/v1/billing/plans/:plan-id/deactivate" post-r)
+(defapi subscribtions-plans%deactivate ("/v1/billing/plans/:plan-id/deactivate" post-request)
         ())
 
 (defapi subscribtions-plans%update-pricing-schemas
-    ("/v1/billing/plans/:plan-id/update-pricing-schemas" post-r)
+    ("/v1/billing/plans/:plan-id/update-pricing-schemas" post-request)
     ())
 
-(defapi subscriptions%create ("/v1/billing/subscriptions" post-r)
+(defapi subscriptions%create ("/v1/billing/subscriptions" post-request)
         ());has prefer
 
-(defapi subscriptions%update ("/v1/billing/subscriptions/:sub-id" patch-r)
+(defapi subscriptions%update ("/v1/billing/subscriptions/:sub-id" patch-request)
         ())
 
-(defapi subscriptions%details ("/v1/billing/subscriptions/:sub-id" get-r)
+(defapi subscriptions%details ("/v1/billing/subscriptions/:sub-id" get-request)
         ())
 
-(defapi subscriptions%activate ("/v1/billing/subscriptions/:sub-id/activate" post-r)
+(defapi subscriptions%activate ("/v1/billing/subscriptions/:sub-id/activate" post-request)
         ())
 
-(defapi subscriptions%cancel ("/v1/billing/subscriptions/:sub-id/activate" post-r)
+(defapi subscriptions%cancel ("/v1/billing/subscriptions/:sub-id/activate" post-request)
         ())
 
-(defapi subscriptions%capture ("/v1/billing/subscriptions/:sub-id/capture" post-r)
+(defapi subscriptions%capture ("/v1/billing/subscriptions/:sub-id/capture" post-request)
         ())
 
-(defapi subscriptions%revise ("/v1/billing/subscriptions/:sub-id/revise" post-r)
+(defapi subscriptions%revise ("/v1/billing/subscriptions/:sub-id/revise" post-request)
         ())
 
-(defapi subscriptions%suspend ("/v1/billing/subscriptions/:sub-id/suspend" post-r)
+(defapi subscriptions%suspend ("/v1/billing/subscriptions/:sub-id/suspend" post-request)
         ())
 
 (defapi subscriptions%transactions ("/v1/billing/subscriptions/:sub-id/transactions"
-                                    post-r)
+                                    post-request)
         ((start_time
           :accessor start-time 
           :initarg :start-time)
@@ -515,7 +515,7 @@
           :initarg :end-time)))
 
 ;;;search
-(defapi search-transactions%list ("/v1/reporting/transactions" get-r)
+(defapi search-transactions%list ("/v1/reporting/transactions" get-request)
         ((transaction_id
           :accessor transaction-id
           :initarg :transaction-id)
@@ -559,7 +559,7 @@
           :accessor page
           :initarg :page)))
 
-(defapi search-balances%list ("/v1/reporting/balances" get-r)
+(defapi search-balances%list ("/v1/reporting/balances" get-request)
         ((as_of_time
           :accessor as-of-time
           :initarg :as-of-time)
@@ -569,34 +569,34 @@
 
 
 ;;;webhooks
-(defapi webhooks%list ("/v1/notifications/webhooks" get-r)
+(defapi webhooks%list ("/v1/notifications/webhooks" get-request)
         ((anchor_time
           :accessor anchor-time
           :initarg :anchor-time)))
 
-(defapi webhooks%create ("/v1/notifications/webhooks" post-r)
+(defapi webhooks%create ("/v1/notifications/webhooks" post-request)
         ())
 
-(defapi webhooks%delete ("/v1/notifications/webhooks/:webhook-id" delete-r)
+(defapi webhooks%delete ("/v1/notifications/webhooks/:webhook-id" delete-request)
         ())
 
-(defapi webhooks%update ("/v1/notifications/webhooks/:webhook-id" patch-r)
+(defapi webhooks%update ("/v1/notifications/webhooks/:webhook-id" patch-request)
         ())
 
-(defapi webhooks%details ("/v1/notifications/webhooks/:webhook-id" get-r)
+(defapi webhooks%details ("/v1/notifications/webhooks/:webhook-id" get-request)
         ())
 
 (defapi webhooks%list-event-subscriptions
-    ("/v1/notifications/webhooks/:webhook-id/event-types" get-r)
+    ("/v1/notifications/webhooks/:webhook-id/event-types" get-request)
     ())
 
-;; (defapi webhooks%verify-signature ("/v1/notifications/verify-webhook-signature" post-r%jojo)
+;; (defapi webhooks%verify-signature ("/v1/notifications/verify-webhook-signature" post-request%jojo)
 ;;   ());;this will not work.
 
-(defapi webhooks%list-event-types ("/v1/notifications/webhooks-event-types" get-r)
+(defapi webhooks%list-event-types ("/v1/notifications/webhooks-event-types" get-request)
         ())
 
-(defapi webhooks%list-event-notifications ("/v1/notifications/webhooks-events" get-r)
+(defapi webhooks%list-event-notifications ("/v1/notifications/webhooks-events" get-request)
         ((page_size
           :accessor page-size
           :initarg :page-size)
@@ -614,13 +614,13 @@
           :initarg :end-time)))
 
 (defapi webhooks%notification-details ("/v1/notifications/webhooks-events/:event-id"
-                                       get-r)
+                                       get-request)
         ())
 
 (defapi webhooks%resend-event ("/v1/notifications/webhooks-events/:event-id/resend"
-                               post-r)
+                               post-request)
         ())
 
 (defapi webhooks%simulate-event ("/v1/notifications/simulate-event"
-                                 post-r)
+                                 post-request)
         ())

@@ -19,11 +19,29 @@
            #:gen-url-generator
            #:gen-query-generator
            #:slots-from-url
+           #:defapi
 
            ;;mop
            #:lisp-pay-api-call
            #:lisp-pay-api-slot
-           #:request
+           #:lisp-pay-api-call-with-query
            #:string-constructor
-           #:endpoint
-           #:genned-slot-names))
+           #:string-constructor
+           #:endpoint           
+           #:genned-slot-names
+           #:query-slot-names
+           #:query-constructor
+           #:request
+           #:request-fun
+           #:content 
+           #:request-without-content
+           #:get-request
+           #:delete-request
+           #:request-with-content
+           #:post-request
+           #:post-files-request
+           #:put-request
+           #:patch-request
+           #:response))
+
+           
