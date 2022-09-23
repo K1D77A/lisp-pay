@@ -102,14 +102,15 @@
 
 (defmethod generate-url (req)
   (with-accessors ((string-constructor string-constructor)
-                   (query-constructor query-construct))
+                   (query-constructor query-constructor))
       (class-of req)
     (concatenate 'string
                  (if *testing*
                      "https://api-m.sandbox.paypal.com"
                      "https://api-m.paypal.com")
                  (funcall string-constructor req)
-                 (funcall query-constructor req))))
+                 (when query-constructor 
+                   (funcall query-constructor req)))))
 
 (defgeneric generate-headers (req)
   (:method-combination append :most-specific-last))

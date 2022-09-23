@@ -16,7 +16,8 @@
     :initarg :query-slot-names)
    (query-constructor
     :accessor query-constructor
-    :initarg :query-constructor)))
+    :initarg :query-constructor
+    :initform nil)))
 
 (defmethod string-constructor ((class lisp-pay-api-call))
   (in-list (slot-value class 'string-constructor)))

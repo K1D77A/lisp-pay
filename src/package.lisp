@@ -5,6 +5,12 @@
   (:nicknames #:pay)
   (:export #:lisp-pay-condition
            
+           ;;lisp-pay
+           #:processor
+           #:api-metaclass
+           #:base-url
+           #:defprocessor
+
            ;;helpers
            #:request
            #:raw-body
@@ -19,7 +25,6 @@
            #:gen-url-generator
            #:gen-query-generator
            #:slots-from-url
-           #:defapi
 
            ;;mop
            #:lisp-pay-api-call
