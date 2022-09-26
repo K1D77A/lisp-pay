@@ -66,22 +66,20 @@ Many helpers for defining MOP protocols for API wrappers.
                 (list intern :accessor intern :initarg key)))
             slots)))
 
-;; (defmacro defapi (name (endpoint super) &optional query-slots)
-;;   (let* ((slots (slots-from-url endpoint))
-;;          (names (mapcar #'first slots))
-;;          (query-slot-names (mapcar #'first query-slots)))
-;;     `(let ((class 
-;;              (defclass ,name (,super)
-;;                ,(append slots query-slots)
-;;                ,@(append `((:metaclass 
-;;                            (:genned-slot-names ,names)
-;;                            (:query-slot-names ,query-slot-names)
-;;                            (:endpoint ,endpoint))))))
-;;        (c2mop:ensure-finalized class)
-;;        (with-slots (string-constructor headers
-;;                     query-constructor query-slot-names)
-;;            class
-;;          (setf (string-constructor class) (gen-url-generator class))
-;;          (when ',query-slots
-;;            (setf (query-constructor class)
-;;                  (gen-query-generator class query-slot-names)))))))
+(defgeneric generate-url (processor request))
+
+(defgeneric generate-dex-list (processor request))
+
+(defgeneric call-api (request)
+  (:documentation "Generic means of making per processor requests."))
+
+(defmethod call-api (request)
+  (%call-api (symbol-value (find-symbol "*PROCESSOR*")) request))
+
+(defmethod %call-api (processor request)
+  (let ((url (generate-url processor request))
+        (args (generate-dex-list processor request))
+        (fun (request-fun request)))
+    (construct-response-from-api processor
+                                 (wrap-dex-call 
+                                   (apply fun url args)))))

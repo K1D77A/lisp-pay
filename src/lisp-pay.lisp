@@ -12,6 +12,8 @@
 (defclass testing-processor (processor)
   ())
 
+(defparameter *processor* (make-instance 'processor))
+
 (defmacro defprocessor (name metaclass direct-slots &rest options)
   `(progn
      (defclass ,name (processor)

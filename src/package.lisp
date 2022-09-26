@@ -19,12 +19,20 @@
            #:crc-raw
            #:string-gen
            #:in-list
+           #:write-json
+           #:read-json
+           #:%write-json
+           #:%read-json
 
            ;;protocol
            #:replace-vars-for-slot-names
            #:gen-url-generator
            #:gen-query-generator
            #:slots-from-url
+           #:call-api
+           #:%call-api
+           #:generate-url
+           #:generate-dex-list
 
            ;;mop
            #:lisp-pay-api-call
@@ -47,6 +55,26 @@
            #:post-files-request
            #:put-request
            #:patch-request
-           #:response))
+           #:response
 
-           
+           ;;response
+           #:construct-api-failure-object
+           #:construct-response-from-api
+           #:determine-response
+           #:api-response-condition
+           #:client-error-response
+           #:server-error-response
+           #:unknown-server-response
+
+           #:api-response-class
+           #:information-response
+           #:successful-response
+           #:redirection-response
+
+           #:status-code
+           #:body
+           #:dex-response
+           #:api-failure
+           ))
+
+

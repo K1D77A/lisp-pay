@@ -59,3 +59,20 @@
                       (make-method ,form))
         form)))
 
+(defgeneric write-json (obj &optional stream)
+  (:documentation "Write JSON"))
+
+(defmethod %write-json (processor obj &optional stream)
+  (shasht:write-json obj stream))
+
+(defmethod write-json (obj &optional stream)
+  (%write-json (symbol-value (find-symbol "*PROCESSOR*")) obj stream))
+
+(defgeneric read-json (stream-or-string)
+  (:documentation "Read JSON"))
+
+(defmethod %read-json (processor stream-or-string)
+  (shasht:read-json stream-or-string))
+
+(defmethod read-json (stream-or-string)
+  (%read-json (symbol-value (find-symbol "*PROCESSOR*")) stream-or-string))
