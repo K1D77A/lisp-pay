@@ -2,37 +2,43 @@
 
 ;;;webhooks https://docs.btcpayserver.org/API/Greenfield/v1/#tag/Webhooks
 
-(defapi webhooks%all ("/api/v1/stores/:store-id/webhooks" get-request)
-        ())
+(defapi stores-webhooks%all
+    ("/api/v1/stores/:store-id/webhooks" get-request)
+    ())
 
-(defapi webhooks%create ("/api/v1/stores/:store-id/webhooks" post-request)
-        ())
+(defapi stores-webhooks%create
+    ("/api/v1/stores/:store-id/webhooks" post-request)
+    ())
 
-(defapi webhooks%get ("/api/v1/stores/:store-id/webhooks/:webhook-id" get-request)
-        ())
+(defapi stores-webhooks%get
+    ("/api/v1/stores/:store-id/webhooks/:webhook-id" get-request)
+    ())
 
-(defapi webhooks%update ("/api/v1/stores/:store-id/webhooks/:webhook-id" put-request)
-        ())
+(defapi stores-webhooks%update
+    ("/api/v1/stores/:store-id/webhooks/:webhook-id" put-request)
+    ())
 
-(defapi webhooks%delete ("/api/v1/stores/:store-id/webhooks/:webhook-id" delete-request)
-        ())
+(defapi stores-webhooks%delete
+    ("/api/v1/stores/:store-id/webhooks/:webhook-id"
+     delete-request)
+    ())
 
-(defapi webhooks%latest-deliveries
+(defapi stores-webhooks%latest-deliveries
     ("/api/v1/stores/:store-id/webhooks/:webhook-id/deliveries" get-request)
     ((count
       :initarg :count
       :type string)))
 
-(defapi webhooks%get-delivery-info
+(defapi stores-webhooks%get-delivery-info
     ("/api/v1/stores/:store-id/webhooks/:webhook-id/deliveries/:delivery-id" get-request)
     ())
 
-(defapi webhooks%get-delivery-object
+(defapi stores-webhooks%get-delivery-object
     ("/api/v1/stores/:store-id/webhooks/:webhook-id/deliveries/:delivery-id/request"
      get-request)
     ())
 
-(defapi webhooks%redeliver-object
+(defapi stores-webhooks%redeliver-object
     ("/api/v1/stores/:store-id/webhooks/:webhook-id/deliveries/:delivery-id/redeliver"
      post-request)
     ())
@@ -596,6 +602,134 @@
 (defapi stores-users%remove
     ("/api/v1/stores/:store-id/users/:user-id"
      delete-request))
+
+
+;;;store wallet on chain
+;;;https://docs.btcpayserver.org/API/Greenfield/v1/#tag/Store-Wallet-(On-Chain)
+
+(defapi stores-wallet-on-chain%all
+    ("/api/v1/stores/:store-id/payment-methods/OnChain/:crypto-code/wallet"
+     get-request))
+
+(defapi stores-wallet-on-chain%fee-rate
+    ("/api/v1/stores/:store-id/payment-methods/OnChain/:crypto-code/wallet/fee-rate"
+     get-request)
+    ((block-target
+      :initarg :block-target
+      :as-string "blockTarget"
+      :type number)))
+
+(defapi stores-wallet-on-chain%address
+    ("/api/v1/stores/:store-id/payment-methods/OnChain/:crypto-code/wallet/address"
+     get-request)
+    ((force-generate
+      :initarg :force-generate
+      :as-string "forceGenerate"
+      :initform nil
+      :type bool)))
+
+(defapi stores-wallet-on-chain%unreserve
+    ("/api/v1/stores/:store-id/payment-methods/OnChain/:crypto-code/wallet/address"
+     delete-request))
+
+(defapi stores-wallet-on-chain%transactions
+    ("/api/v1/stores/:store-id/payment-methods/OnChain/:crypto-code/wallet/transactions"
+     get-request)
+    ((status-filter
+      :initarg :status-filter
+      :as-string "statusFilter"
+      :type array)
+     (label-filter
+      :initarg :label-filter
+      :as-string "labelFilter"
+      :type string)
+     (skip
+      :initarg :skip
+      :type integer)
+     (limit
+      :initarg :limit 
+      :type integer)))
+
+(defapi stores-wallet-on-chain%create-wallet-transaction
+    ("/api/v1/stores/:store-id/payment-methods/OnChain/:crypto-code/wallet/transactions"
+     post-request))
+
+(defapi stores-wallet-on-chain%get-transaction
+    (#.(format nil "/api/v1/stores/:store-id/payment-methods/OnChain/~
+                    :crypto-code/wallet/transactions/:transaction-id")
+       get-request))
+
+(defapi stores-wallet-on-chain%patch-transaction-info
+    (#.(format nil "/api/v1/stores/:store-id/payment-methods/OnChain/~
+                    :crypto-code/wallet/transactions/:transaction-id")
+       patch-request)
+    ((force
+      :initarg :force
+      :type string)))
+
+(defapi stores-wallet-on-chain%get-utxos
+    ("/api/v1/stores/:store-id/payment-methods/OnChain/:crypto-code/wallet/utxos"
+     get-request))
+
+;;;stores
+;;;https://docs.btcpayserver.org/API/Greenfield/v1/#tag/Stores
+
+(defapi stores%all
+    ("/api/v1/stores"
+     get-request))
+
+(defapi stores%create
+    ("/api/v1/stores"
+     post-request))
+
+(defapi stores%get
+    ("/api/v1/stores/:store-id"
+     get-request))
+
+(defapi stores%update
+    ("/api/v1/stores/:store-id"
+     put-request))
+
+(defapi stores%remove
+    ("/api/v1/stores/:store-id"
+     delete-request))
+
+;;;users
+;;;https://docs.btcpayserver.org/API/Greenfield/v1/#tag/Users
+
+(defapi users%info
+    ("/api/v1/users/me"
+     get-request))
+
+(defapi users%delete-me
+    ("/api/v1/users/me"
+     delete-request))
+
+(defapi users%all
+    ("/api/v1/users"
+     get-request))
+
+(defapi users%create
+    ("/api/v1/users"
+     post-request))
+
+(defapi users%get
+    ("/api/v1/users/:user-id-or-email"
+     get-request))
+
+(defapi users%delete
+    ("/api/v1/users/:user-id-or-email"
+     delete-request))
+
+(defapi users%lock
+    ("/api/v1/users/:user-id-or-email/lock"
+     delete-request))
+
+
+
+
+
+
 
 
 
