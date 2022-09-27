@@ -187,8 +187,267 @@
      post-request)
     ())
 
-;;;lighting-internal
+;;;lightning-internal
 ;;;https://docs.btcpayserver.org/API/Greenfield/v1/#tag/Lightning-(Internal-Node)
+
+(defapi lightning-internal%info ("/api/v1/server/lightning/:crypto-code/info" get-request)
+        ())
+
+(defapi lightning-internal%balance
+    ("/api/v1/server/lightning/:crypto-code/balance" get-request)
+    ())
+
+(defapi lightning-internal%connect
+    ("/api/v1/server/lightning/:crypto-code/connect" post-request)
+    ())
+
+(defapi lightning-internal%get-channels
+    ("/api/v1/server/lightning/:crypto-code/channels" get-request)
+    ())
+
+(defapi lightning-internal%open-channel
+    ("/api/v1/server/lightning/:crypto-code/channels" post-request)
+    ())
+
+(defapi lightning-internal%deposit-address
+    ("/api/v1/server/lightning/:crypto-code/address" post-request)
+    ())
+
+(defapi lightning-internal%get-payment
+    ("/api/v1/server/lightning/:crypto-code/payments/:payment-hash" get-request)
+    ())
+
+(defapi lightning-internal%get-invoice
+    ("/api/v1/server/lightning/:crypto-code/invoices/:invoice-id" get-request)
+    ())
+
+(defapi lightning-internal%pay-invoice
+    ("/api/v1/server/lightning/:crypto-code/invoices/pay" post-request)
+    ())
+
+
+(defapi lightning-internal%create-invoice
+    ("/api/v1/server/lightning/:crypto-code/invoices" post-request)
+    ())
+
+;;;lightning (store)
+;;;https://docs.btcpayserver.org/API/Greenfield/v1/#tag/Lightning-(Store)
+
+(defapi lightning-store%info ("/api/v1/stores/:store-id/lightning/:crypto-code/info"
+                              get-request)
+        ())
+
+(defapi lightning-store%balance
+    ("/api/v1/stores/:store-id/lightning/:crypto-code/balance" get-request)
+    ())
+
+(defapi lightning-store%connect
+    ("/api/v1/stores/:store-id/lightning/:crypto-code/connect" post-request)
+    ())
+
+(defapi lightning-store%get-channels
+    ("/api/v1/stores/:store-id/lightning/:crypto-code/channels" get-request)
+    ())
+
+(defapi lightning-store%open-channel
+    ("/api/v1/stores/:store-id/lightning/:crypto-code/channels" post-request)
+    ())
+
+(defapi lightning-store%deposit-address
+    ("/api/v1/stores/:store-id/lightning/:crypto-code/address" post-request)
+    ())
+
+(defapi lightning-store%get-payment
+    ("/api/v1/stores/:store-id/lightning/:crypto-code/payments/:payment-hash" get-request)
+    ())
+
+(defapi lightning-store%get-invoice
+    ("/api/v1/stores/:store-id/lightning/:crypto-code/invoices/:invoice-id" get-request)
+    ())
+
+(defapi lightning-store%pay-invoice
+    ("/api/v1/stores/:store-id/lightning/:crypto-code/invoices/pay" post-request)
+    ())
+
+
+(defapi lightning-store%create-invoice
+    ("/api/v1/stores/:store-id/lightning/:crypto-code/invoices" post-request)
+    ())
+
+;;;misc https://docs.btcpayserver.org/API/Greenfield/v1/#tag/Miscelleneous
+
+(defapi misc%permission-metadata
+    ("/misc/permissions" get-request)
+    ())
+
+(defapi misc%language-codes
+    ("/misc/lang" get-request)
+    ())
+
+(defapi misc%invoice-checkout-page
+    ("/i/:invoice-id" get-request)
+    ((language
+      :initarg :language
+      :as-string "lang"
+      :type string)))
+
+;;;notifications
+;;;https://docs.btcpayserver.org/API/Greenfield/v1/#operation/Notifications_GetNotifications
+
+(defapi notifications%all ("/api/v1/users/me/notifications" get-request)
+        ((seen
+          :initarg :seen
+          :type string)
+         (skip
+          :initarg :skip
+          :type fixnum)
+         (take
+          :initarg :take
+          :type fixnum)))
+
+(defapi notifications%get ("/api/v1/users/me/notifications/:notification-id" get-request)
+        ())
+
+(defapi notifications%update ("/api/v1/users/me/notifications/:notification-id" put-request)
+        ())
+
+(defapi notifications%remove ("/api/v1/users/me/notifications/:notification-id"
+                              delete-request)
+        ())
+
+
+;;;payment requests
+;;;https://docs.btcpayserver.org/API/Greenfield/v1/#tag/Payment-Requests
+
+(defapi payment-requests%all ("/api/v1/stores/:store-id/payment-requests" get-request)
+        ())
+
+(defapi payment-requests%create ("/api/v1/stores/:store-id/payment-requests" post-request)
+        ())
+
+(defapi payment-requests%get
+    ("/api/v1/stores/:store-id/payment-requests/:payment-request-id" get-request)
+    ())
+
+(defapi payment-requests%archive
+    ("/api/v1/stores/:store-id/payment-requests/:payment-request-id" delete-request)
+    ())
+
+(defapi payment-requests%update
+    ("/api/v1/stores/:store-id/payment-requests/:payment-request-id" put-request)
+    ())
+
+;;;stores payout processors
+;;;https://docs.btcpayserver.org/API/Greenfield/v1/#operation/StorePayoutProcessors_GetStorePayoutProcessors
+
+(defapi stores-payout-processors%all
+    ("/api/v1/stores/:store-id/payout-processors" get-request)
+    ())
+
+(defapi store-payout-processors%remove
+    ("/api/v1/stores/:store-id/payout-processors/:processor-id/:payment-method"
+     delete-request)
+    ())
+
+(defapi stores-payout-processors%get-automated
+    (#.(format nil "/api/v1/stores/:store-id/payout-processors/~
+                    OnChainAutomatedTransferSenderFactory/:payment-method")
+       get-request)
+    ())
+
+(defapi stores-payout-processors%update-automated
+    (#.(format nil "/api/v1/stores/:store-id/payout-processors/~
+                    OnChainAutomatedTransferSenderFactory/:payment-method")
+       put-request)
+    ())
+
+(defapi stores-payout-processors%get-lightning-automated
+    (#.(format nil "/api/v1/stores/:store-id/payout-processors/~
+                    LightningAutomatedTransferSenderFactory/:payment-method")
+       get-request)
+    ())
+
+(defapi stores-payout-processors%update-lightning-automated
+    (#.(format nil "/api/v1/stores/:store-id/payout-processors/~
+                    LightningAutomatedTransferSenderFactory/:payment-method")
+       put-request)
+    ())
+
+(defapi stores-payout-processors%all-automated
+    (#.(format nil "/api/v1/stores/:store-id/payout-processors/~
+                    OnChainAutomatedTransferSenderFactory")
+       get-request)
+    ())
+
+(defapi stores-payout-processors%update-all-automated
+    (#.(format nil "/api/v1/stores/:store-id/payout-processors/~
+                    OnChainAutomatedTransferSenderFactory")
+       put-request)
+    ())
+
+(defapi stores-payout-processors%all-lightning-automated
+    (#.(format nil "/api/v1/stores/:store-id/payout-processors/~
+                    LightningAutomatedTransferSenderFactory")
+       get-request)
+    ())
+
+;;;payout processors 
+;;;https://docs.btcpayserver.org/API/Greenfield/v1/#operation/PayoutProcessors_GetPayoutProcessors
+
+(defapi payout-processors%all 
+    ("/api/v1/payout-processors" get-request)
+    ())
+
+;;;pull payments management
+;;;https://docs.btcpayserver.org/API/Greenfield/v1/#tag/Pull-payments-(Management)
+
+(defapi stores-pull-payments%all
+    ("/api/v1/stores/:store-id/pull-payments"
+     get-request)
+    ((include-archived
+      :initarg :include-archived
+      :as-string "includeArchived"
+      :initform nil
+      :type bool)))
+
+(defapi stores-pull-payments%create
+    ("/api/v1/stores/:store-id/pull-payments"
+     post-request))
+
+(defapi stores-pull-payments%archive
+    ("/api/v1/stores/:store-id/pull-payments/:pull-payment-id"
+     delete-request))
+
+;;;pull payments public
+;;;https://docs.btcpayserver.org/API/Greenfield/v1/#tag/Pull-payments-(Public)
+
+(defapi public-pull-payments%get
+    ("/api/v1/pull-payments/:pull-payment-id"
+     get-request))
+
+(defapi public-pull-payments%get-payouts
+    ("/api/v1/pull-payments/:pull-payment-id/payouts"
+     get-request)
+    ((include-cancelled
+      :initarg :include-cancelled
+      :as-string "includeCancelled"
+      :initform nil
+      :type bool)))
+
+(defapi public-pull-payments%create-payout
+    ("/api/v1/pull-payments/:pull-payment-id/payouts"
+     post-request))
+
+(defapi public-pull-payments%get-payout 
+    ("/api/v1/pull-payments/:pull-payment-id/payouts/:payout-id"
+     get-request))
+
+
+
+
+
+
+
 
 
 
