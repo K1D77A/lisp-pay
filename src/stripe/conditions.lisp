@@ -6,7 +6,7 @@
 (define-condition stripe-condition (lisp-pay-condition)
   ())
 
-(define-condition stripe-api-condition (stripe-condition)
+(define-condition stripe-api-condition (stripe-condition api-response-condition)
   ((error-type
     :accessor error-type
     :initarg :error-type)
@@ -74,26 +74,12 @@
          'api-error)
         (t (error "received an error code that is unexpected."))))
 
-(defmethod %error-key->slot-name ((parse-as (eql :plist)) key)
-  (case key
-    (:|type| nil)
-    (:|message| nil)
-    (:|code| 'code)
-    (:|decline_code| 'decline_code)
-    (:|param| 'param)
-    (:|payment_intent| 'payment-intent)
-    (:|charge| 'charge)
-    (:|doc_url| 'doc-url)
-    (:|payment_method| 'payment-method)
-    (:|payment_method_type| 'payment-method-type)
-    (:|setup_intent| 'setup-intent)
-    (:|source| 'source)))
 
-(defmethod %error-key->slot-name ((parse-as (eql :hash-table)) key)
+(defmethod %error-key->slot-name (key)
   (let ((alist 
           '(("type" . nil)
             ("message" . nil)
-            ("code" . code)
+            ("code" . status-code)
             ("decline_code" . decline_code)
             ("param" . param)
             ("payment_intent" . payment-intent)
@@ -106,28 +92,13 @@
     (cdr (assoc key alist :test #'string=))))
 
 
-(defgeneric %failed-request-to-condition (parse-as request)
+(defgeneric %failed-request-to-condition (request)
   (:documentation "Convert a failed request to a condition using *parse-as*"))
 
-(defmethod %failed-request-to-condition ((parse-as (eql :plist)) condition)
+(defmethod %failed-request-to-condition (condition)
   "Converts the error returned by Dex into a nice stripe condition."
   (let* ((http-body (dexador.error:response-body condition))
-         (parsed (jojo:parse http-body)))
-    (destructuring-bind (&key |type| |message| &allow-other-keys)
-        (getf parsed :|error|)
-      (let ((obj (make-instance (%determine-condition-class |type|)
-                                :message |message|
-                                :parent-condition condition)))
-        (alexandria:doplist (key val parsed)
-          (let ((slot-name (%error-key->slot-name parse-as key)))
-            (when slot-name
-              (setf (slot-value obj slot-name) val))))
-        (error obj)))))
-
-(defmethod %failed-request-to-condition ((parse-as (eql :hash-table)) condition)
-  "Converts the error returned by Dex into a nice stripe condition."
-  (let* ((http-body (dexador.error:response-body condition))
-         (parsed (jojo:parse http-body :as :hash-table))
+         (parsed (read-json http-body))
          (err (gethash "error" parsed))
          (type (gethash "type" err))
          (message (gethash "message" err)))

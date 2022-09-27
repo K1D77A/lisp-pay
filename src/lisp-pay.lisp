@@ -34,10 +34,17 @@
                                 (:query-slot-names ,query-slot-names)
                                 (:endpoint ,endpoint))))))
             (c2mop:ensure-finalized class)
-            (with-slots (string-constructor headers
-                         query-constructor query-slot-names)
-                class
-              (setf (string-constructor class) (gen-url-generator class))
-              (when ',query-slots
-                (setf (query-constructor class)
-                      (gen-query-generator class query-slot-names)))))))))
+            (let* ((direct-slots (c2mop:class-direct-slots class))
+                   (direct-query-slots
+                     (mapcar (lambda (slot-name)
+                               (find slot-name direct-slots
+                                     :key #'c2mop:slot-definition-name
+                                     :test #'string-equal))
+                             ',query-slot-names)))
+              (with-slots (string-constructor query-constructor)
+                  class
+                (setf (string-constructor class) (gen-url-generator class))
+                (when ',query-slots
+                  (setf (query-constructor class)
+                        (gen-query-generator direct-query-slots
+                                             ',query-slot-names))))))))))

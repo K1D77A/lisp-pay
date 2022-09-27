@@ -1,5 +1,13 @@
 (in-package #:lisp-pay/paypal)
 
+;; (defprocessor btcpay lisp-pay-api-call 
+;;   ((api-key
+;;     :accessor api-key
+;;     :initform "3e88ac02bba3af5c053af8260008c6cc890e3b74"
+;;     :type string)
+;;    (base-url 
+;;     :initform "https://btcpay.test.btcbank.li")))
+
 (defclass paypal-api-slot (lisp-pay-api-slot)
   ((name
     :accessor name
@@ -173,23 +181,31 @@
 
 (defgeneric call-api (req))
 
-(defmethod call-api (req)
-  (flet ((body (req)
-           (let ((url (generate-url req))
-                 (args (generate-dex-list req))
-                 (fun (request-fun req)))
-             (wrapped-dex-call (resp status)
-               (apply fun url args)
-               (make-instance (determine-good-class status)
-                              :body (typecase resp
-                                      (simple-vector nil)
-                                      (simple-string (jojo:parse resp :as *parse-as*))))))))
-    (restart-case 
-        (body req)
-      (missing-token ()
-        :report "Token could be broken, refresh and try again?"
-        (get-token)
-        (body req)))))
+;; (defmethod call-api (req)
+;;   (flet ((body (req)
+;;            (let ((url (generate-url req))
+;;                  (args (generate-dex-list req))
+;;                  (fun (request-fun req)))
+;;              (wrapped-dex-call (resp status)
+;;                (apply fun url args)
+;;                (make-instance (determine-good-class status)
+;;                               :body (typecase resp
+;;                                       (simple-vector nil)
+;;                                       (simple-string (jojo:parse resp :as *parse-as*))))))))
+;;     (restart-case 
+;;         (body req)
+;;       (missing-token ()
+;;         :report "Token could be broken, refresh and try again?"
+;;         (get-token)
+;;         (body req)))))
+
+;; (defmethod %call-api :around ((processor paypal) req)
+;;   (restart-case
+;;       (call-next-method)
+;;     (missing-token ()
+;;       :report "Token could be broken, refresh and try again?"
+;;       (get-token)
+;;       (call-next-method))))
 
 (defmethod print-object ((obj request) stream)
   (print-unreadable-object (obj stream :type t :identity t)

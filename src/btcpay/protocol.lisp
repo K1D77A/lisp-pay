@@ -15,22 +15,11 @@
 (defparameter *processor*
   (make-instance 'btcpay))
 
-(defgeneric generate-headers (a b)
-  (:method-combination append :most-specific-last))
-
-(defmethod generate-url ((processor btcpay) req)
-  (with-accessors ((string-constructor string-constructor)
-                   (query-constructor query-constructor))
-      (class-of req)
-    (concatenate 'string
-                 (base-url processor)
-                 (funcall string-constructor req)
-                 (when query-constructor
-                   (funcall query-constructor req)))))
-
-
-(defmethod generate-dex-list ((processor btcpay) req)
+(defmethod generate-dex-list append ((processor btcpay) req)
   `(:headers (("Authorization" . ,(format nil "token ~A" (api-key processor))))))
+
+(defmethod generate-dex-list append ((processor btcpay) (req request-with-content))
+  `(:content (write-json ,(content req) nil)))
 
 (defclass btcpay-api-failure-obj ()
   ((code
@@ -39,6 +28,11 @@
    (message
     :accessor message
     :initarg :message)))
+
+(defmethod print-object ((obj btcpay-api-failure-obj) stream)
+  (print-unreadable-object (obj stream :type t :identity t)
+    (format stream "~%")
+    (print-all-slots obj stream)))
 
 (defmethod construct-api-failure-object ((processor btcpay)
                                          response)
@@ -50,8 +44,7 @@
                      :code code
                      :message message))))
 
-(defapi webhooks%all ("/api/v1/stores/:store-id/webhooks" get-request)
-        ())
+
 
 
 

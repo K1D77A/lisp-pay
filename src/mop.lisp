@@ -30,6 +30,19 @@
 
 
 (defclass lisp-pay-api-slot (c2mop:slot-definition)
+  ((as-string
+    :accessor as-string
+    :initarg :as-string
+    :type string
+    :documentation "String version of the slot-name. When set this is used in place 
+of the slot name when encoding in the Query string.")))
+
+
+(defclass lisp-pay-api-slot-direct (lisp-pay-api-slot c2mop:standard-direct-slot-definition)
+  ())
+
+(defclass lisp-pay-api-slot-effective (lisp-pay-api-slot
+                                       c2mop:standard-effective-slot-definition)
   ())
 
 (defmethod c2mop:validate-superclass ((class lisp-pay-api-call)
@@ -40,6 +53,14 @@
                                       (metaclass standard-class))
   t)
 
+(defmethod c2mop:effective-slot-definition-class ((class lisp-pay-api-call) &rest initargs)
+  (declare (ignore initargs))
+  (find-class 'lisp-pay-api-slot-effective))
+
+(defmethod c2mop:direct-slot-definition-class ((class lisp-pay-api-call) &rest initargs)
+  (declare (ignore initargs))
+  (find-class 'lisp-pay-api-slot-direct))
+
 (defclass request ()
   ((request-fun
     :reader request-fun
@@ -47,6 +68,10 @@
     :initform 'dex:get))
   (:documentation "Top level request class")
   (:metaclass lisp-pay-api-call))
+
+(defmethod print-object ((obj request) stream)
+  (print-unreadable-object (obj stream :type t :identity t)
+    (print-all-slots obj stream)))
 
 (defclass request-without-content (request)
   ()
@@ -86,8 +111,6 @@
     :accessor patch-request
     :initarg :patch-request))
   (:metaclass lisp-pay-api-call))
-
-
 
 (defclass response ()
   ()

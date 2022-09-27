@@ -76,3 +76,15 @@
 
 (defmethod read-json (stream-or-string)
   (%read-json (symbol-value (find-symbol "*PROCESSOR*")) stream-or-string))
+
+
+(defgeneric print-all-slots (obj stream))
+
+(defmethod print-all-slots (obj stream)
+  (let ((slots (c2mop:class-slots (class-of obj))))
+    (format stream "~%")
+    (mapc (lambda (slot)
+            (let ((name (c2mop:slot-definition-name slot)))
+              (when (slot-boundp obj name)
+                (format stream "~A: ~A~%" name (slot-value obj name)))))
+          slots)))

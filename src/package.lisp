@@ -23,6 +23,7 @@
            #:read-json
            #:%write-json
            #:%read-json
+           #:print-all-slots
 
            ;;protocol
            #:replace-vars-for-slot-names
@@ -33,6 +34,7 @@
            #:%call-api
            #:generate-url
            #:generate-dex-list
+           #:defapi
 
            ;;mop
            #:lisp-pay-api-call
