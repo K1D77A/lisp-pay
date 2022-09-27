@@ -442,19 +442,160 @@
     ("/api/v1/pull-payments/:pull-payment-id/payouts/:payout-id"
      get-request))
 
+;;;there is another API here but it is exactly the same as the one above...
+;;;https://docs.btcpayserver.org/API/Greenfield/v1/#operation/PullPayments_GetPayout
+
+
+;;;stores payouts
+;;;https://docs.btcpayserver.org/API/Greenfield/v1/#tag/Stores-(Payouts)
+
+(defapi store-payouts%create
+    ("/api/v1/stores/:store-id/payouts"
+     post-request))
+
+(defapi store-payouts%all
+    ("/api/v1/stores/:store-id/payouts"
+     get-request))
+
+(defapi store-payouts%approve
+    ("/api/v1/stores/:store-id/payouts/:payout-id"
+     post-request))
+
+(defapi store-payouts%cancel
+    ("/api/v1/stores/:store-id/payouts/:payout-id"
+     delete-request))
+
+(defapi store-payouts%mark-paid
+    ("/api/v1/stores/:store-id/payouts/:payout-id"
+     post-request))
+
+;;;server info
+;;;https://docs.btcpayserver.org/API/Greenfield/v1/#tag/ServerInfo
+
+(defapi server-info%all
+    ("/api/v1/server/info"
+     get-request))
+
+;;;stores email
+;;;https://docs.btcpayserver.org/API/Greenfield/v1/#tag/Stores-(Email)
+
+(defapi server-email%all
+    ("/api/v1/stores/:store-id/email"
+     get-request))
+
+(defapi server-email%update
+    ("/api/v1/stores/:store-id/email"
+     put-request))
+
+(defapi server-email%send
+    ("/api/v1/stores/:store-id/email/send"
+     post-request))
+
+;;;store payment methods
+;;;https://docs.btcpayserver.org/API/Greenfield/v1/#tag/Store-Payment-Methods
+
+(defapi store-payment-methods%all
+    ("/api/v1/stores/:store-id/payment-methods"
+     get-request))
+
+;;;store payment methods lightning
+;;;https://docs.btcpayserver.org/API/Greenfield/v1/#tag/Store-Payment-Methods-(Lightning-Network)
+
+(defapi store-payment-methods-lightning%all
+    ("/api/v1/stores/:store-id/payment-methods/LightningNetwork"
+     get-request))
+
+(defapi store-payment-methods-lightning%get
+    ("/api/v1/stores/:store-id/payment-methods/LightningNetwork/:crypto-code"
+     get-request))
+
+(defapi store-payment-methods-lightning%update
+    ("/api/v1/stores/:store-id/payment-methods/LightningNetwork/:crypto-code"
+     put-request))
+
+(defapi store-payment-methods-lightning%remove
+    ("/api/v1/stores/:store-id/payment-methods/LightningNetwork/:crypto-code"
+     delete-request))
+
+;;;store payment methods lnurl
+;;;https://docs.btcpayserver.org/API/Greenfield/v1/#tag/Store-Payment-Methods-(LNURL-Pay)
+(defapi store-payment-methods-lnurl%all
+    ("/api/v1/stores/:store-id/payment-methods/LNURL"
+     get-request))
+
+(defapi store-payment-methods-lnurl%get
+    ("/api/v1/stores/:store-id/payment-methods/LNURL/:crypto-code"
+     get-request))
+
+(defapi store-payment-methods-lnurl%update
+    ("/api/v1/stores/:store-id/payment-methods/LNURL/:crypto-code"
+     put-request))
+
+(defapi store-payment-methods-lnurl%remove
+    ("/api/v1/stores/:store-id/payment-methods/LNURL/:crypto-code"
+     delete-request))
 
 
 
 
 
+;;;store payment methods on chain
+;;;https://docs.btcpayserver.org/API/Greenfield/v1/#tag/Store-Payment-Methods-(On-Chain)
 
+(defapi store-payment-methods-on-chain%all
+    ("/api/v1/stores/:store-id/payment-methods/OnChain"
+     get-request))
 
+(defapi store-payment-methods-on-chain%get
+    ("/api/v1/stores/:store-id/payment-methods/OnChain/:crypto-code"
+     get-request))
 
+(defapi store-payment-methods-on-chain%update
+    ("/api/v1/stores/:store-id/payment-methods/OnChain/:crypto-code"
+     put-request))
 
+(defapi store-payment-methods-on-chain%remove
+    ("/api/v1/stores/:store-id/payment-methods/OnChain/:crypto-code"
+     delete-request))
 
+(defapi store-payment-methods-on-chain%generate-wallet
+    ("/api/v1/stores/:store-id/payment-methods/OnChain/:crypto-code/generate"
+     post-request))
 
+(defapi store-payment-methods-on-chain%preview
+    ("/api/v1/stores/:store-id/payment-methods/OnChain/:crypto-code/preview"
+     get-request)
+    ((offset
+      :initarg :offset
+      :type fixnum)
+     (amount
+      :initarg :amount
+      :type fixnum)))
 
+(defapi store-payment-methods-on-chain%preview-proposed
+    ("/api/v1/stores/:store-id/payment-methods/OnChain/:crypto-code/preview"
+     post-request)
+    ((offset
+      :initarg :offset
+      :type fixnum)
+     (amount
+      :initarg :amount
+      :type fixnum)))
 
+;;;stores users
+;;;https://docs.btcpayserver.org/API/Greenfield/v1/#tag/Stores-(Users)
+
+(defapi stores-users%all
+    ("/api/v1/stores/:store-id/users"
+     get-request))
+
+(defapi stores-users%add
+    ("/api/v1/stores/:store-id/users"
+     post-request))
+
+(defapi stores-users%remove
+    ("/api/v1/stores/:store-id/users/:user-id"
+     delete-request))
 
 
 
