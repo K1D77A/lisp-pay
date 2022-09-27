@@ -1,124 +1,34 @@
 (in-package #:lisp-pay/paypal)
 
-;; (defprocessor btcpay lisp-pay-api-call 
-;;   ((api-key
-;;     :accessor api-key
-;;     :initform "3e88ac02bba3af5c053af8260008c6cc890e3b74"
-;;     :type string)
-;;    (base-url 
-;;     :initform "https://btcpay.test.btcbank.li")))
+(defprocessor paypal lisp-pay-api-call 
+  ((api-key
+    :accessor api-key
+    :initform 
+    :type string)
+   (base-url 
+    :initform "https://api-m.paypal.com")
+   (token
+    :accessor token 
+    :initarg :token
+    :type token)
+   (secret
+    :accessor secret
+    :initarg :secret
+    :initform
+    "EMBuo5-J3kWfSEJYY5mtQd8Hm9JezbxjkUUJ2D9JwKwwas1E05Ejp4A1wlpNuuFd3YyIoKZrSxjs9OUb"
+    :type string)
+   (client
+    :accessor client
+    :initarg :client
+    :initform
+    "ATiiZbWBH3_qd_y3P3AZQiQlBIh9mVTDSTtr4ALOPqfTd5eBZooqeJlLT0o6-HLF95_Vj2GADaIhp5Ee")))
 
-(defclass paypal-api-slot (lisp-pay-api-slot)
-  ((name
-    :accessor name
-    :initarg :name)
-   (name->json
-    :accessor name->json 
-    :initarg :name->json
-    :initform nil)))
+(defclass paypal-testing (paypal)
+  ((base-url
+    :initform "https://api-m.sandbox.paypal.com")))
 
-(defclass paypal-api-call (lisp-pay-api-call)
-  ())
-
-(defclass paypal-api-slot-direct (paypal-api-slot c2mop:standard-direct-slot-definition)
-  ())
-
-(defclass paypal-api-slot-effective (paypal-api-slot
-                                     c2mop:standard-effective-slot-definition)
-  ())
-
-(defmethod c2mop:validate-superclass ((class paypal-api-call)
-                                      (metaclass c2mop:funcallable-standard-class))
-  t)
-
-(defmethod c2mop:validate-superclass ((class paypal-api-slot)
-                                      (metaclass standard-class))
-  t)
-
-(defmethod c2mop:effective-slot-definition-class ((class paypal-api-call) &rest initargs)
-  (find-class 'paypal-api-slot-effective))
-
-(defmethod c2mop:direct-slot-definition-class ((class paypal-api-call) &rest initargs)
-  (find-class 'paypal-api-slot-direct))
-
-;; (defclass paypal-request (request)
-;;   ((content-type
-;;     :reader content-type
-;;     :initarg :content-type
-;;     :initform "application/json"))
-;;   (:metaclass paypal-api-call))
-
-;; (defclass request-without-content (paypal-request)
-;;   ()
-;;   (:metaclass paypal-api-call))
-
-;; (defclass get-r (request-without-content)
-;;   ((request-fun :initform 'dex:get))
-;;   (:metaclass paypal-api-call))
-
-;; (defclass query-req (request-without-content)
-;;   ()
-;;   (:metaclass paypal-api-call))
-
-;; (defclass get-r-query (query-req)
-;;   ()
-;;   (:metaclass paypal-api-call))
-
-;; (defclass delete-r  (request-without-content)
-;;   ((request-fun :initform 'dex:delete))
-;;   (:metaclass paypal-api-call))
-
-;; (defclass request-with-content (paypal-request)
-;;   ((content
-;;     :accessor content
-;;     :initarg :content
-;;     :type (or hash-table list)))
-;;   (:metaclass paypal-api-call))
-
-;; (defclass patch-r (paypal-request)
-;;   ((request-fun :initform 'dex:patch)
-;;    (patch-request
-;;     :accessor patch-request
-;;     :initarg :patch-request))
-;;   (:metaclass paypal-api-call))
-
-;; (defclass post-r (request-with-content)
-;;   ((request-fun :initform 'dex:post))
-;;   (:metaclass paypal-api-call))
-
-
-;; (defclass query-req-content (request-with-content)
-;;   ()
-;;   (:metaclass paypal-api-call))
-
-;; (defclass post-query-r (query-req-content post-r)
-;;   ()
-;;   (:metaclass paypal-api-call))
-
-;; (defclass post-files-request (post-r)
-;;   ((content-type
-;;     :initform "multipart/related"))
-;;   (:metaclass ))
-
-;; (defclass put-r (request-with-content)
-;;   ((request-fun :initform 'dex:put))
-;;   (:metaclass paypal-api-call))
-
-;; (defclass put-query-r (query-req-content put-r)
-;;   ()
-;;   (:metaclass paypal-api-call))
-
-(defmethod generate-url (req)
-  (with-accessors ((string-constructor string-constructor)
-                   (query-constructor query-constructor))
-      (class-of req)
-    (concatenate 'string
-                 (if *testing*
-                     "https://api-m.sandbox.paypal.com"
-                     "https://api-m.paypal.com")
-                 (funcall string-constructor req)
-                 (when query-constructor 
-                   (funcall query-constructor req)))))
+(defvar *processor*
+  (make-instance 'paypal-testing))
 
 (defgeneric generate-headers (req)
   (:method-combination append :most-specific-last))
@@ -143,43 +53,6 @@
   (declare (special *request-headers*))
   (when (boundp '*request-headers*)
     *request-headers*))
-
-(defmethod generate-content (req)
-  nil)
-
-(defmethod generate-content ((req request-with-content))
-  (list :content (funcall *json-encoder* (slot-value req 'content))))
-
-(defmethod generate-content ((req patch-request))
-  (list :content (funcall *json-encoder* (slot-value req 'patch-request))))
-
-(defmethod generate-content ((req post-files-request))
-  `(:content ,(slot-value req 'content)))
-
-(defmethod generate-dex-list (req)
-  (append (generate-headers req) (generate-content req)))
-
-(defmacro defapi (name (endpoint super) &optional query-slots)
-  (let* ((slots (slots-from-url endpoint))
-         (names (mapcar #'first slots))
-         (query-slot-names (mapcar #'first query-slots)))
-    `(let ((class 
-             (defclass ,name (,super)
-               ,(append slots query-slots)
-               ,@(append `((:metaclass paypal-api-call)
-                           (:genned-slot-names ,names)
-                           (:query-slot-names ,query-slot-names)
-                           (:endpoint ,endpoint))))))
-       (c2mop:ensure-finalized class)
-       (with-slots (string-constructor headers
-                    query-constructor query-slot-names)
-           class
-         (setf (string-constructor class) (gen-url-generator class))
-         (when ',query-slots
-           (setf (query-constructor class)
-                 (gen-query-generator class query-slot-names)))))))
-
-(defgeneric call-api (req))
 
 ;; (defmethod call-api (req)
 ;;   (flet ((body (req)

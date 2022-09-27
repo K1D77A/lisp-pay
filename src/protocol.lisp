@@ -3,6 +3,15 @@
 #||
 Many helpers for defining MOP protocols for API wrappers.
 ||#
+(defclass processor ()
+  ((base-url
+    :accessor base-url
+    :initarg :base-url)
+   (api-metaclass
+    :accessor api-metaclass)))
+
+(defclass testing-processor (processor)
+  ())
 
 (defun replace-vars-for-slot-names (split slots)
   (mapcar (lambda (str)

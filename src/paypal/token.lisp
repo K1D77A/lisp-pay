@@ -1,10 +1,5 @@
 (in-package #:lisp-pay/paypal)
 
-(defparameter *token* nil)
-
-(defparameter *client* "ATiiZbWBH3_qd_y3P3AZQiQlBIh9mVTDSTtr4ALOPqfTd5eBZooqeJlLT0o6-HLF95_Vj2GADaIhp5Ee")
-
-(defparameter *secret* "EMBuo5-J3kWfSEJYY5mtQd8Hm9JezbxjkUUJ2D9JwKwwas1E05Ejp4A1wlpNuuFd3YyIoKZrSxjs9OUb")
 
 (defclass token ()
   ((nonce
@@ -32,19 +27,7 @@
     :initarg :scope
     :type string)))
 
-(defgeneric parse-token (as response)
-  (:documentation "Generically parses RESPONSE into a an instance of 'token using AS"))
-
-(defmethod parse-token ((as (eql :plist)) token-plist)
-  (destructuring-bind (&key |nonce| |expires_in| |app_id| |token_type| |access_token|
-                         |scope| &allow-other-keys)
-      token-plist
-    (make-instance 'token :scope |scope| :access-token |access_token|
-                          :nonce |nonce| :expires-in
-                          (local-time:timestamp+ (local-time:now) |expires_in| :sec)
-                          :app-id |app_id| :token-type |token_type|)))
-
-(defmethod parse-token ((as (eql :hash-table)) token-hash)
+(defun parse-token (token-hash)
   (with-hash-keys (|nonce| |expires_in| |app_id| |token_type| |access_token| |scope|)
     token-hash 
     (make-instance 'token :scope |scope| :access-token |access_token|
@@ -53,7 +36,6 @@
                           :app-id |app_id| :token-type |token_type|)))
 
 (defun get-token (&optional (ignore-checks nil))
-  (assert (member *parse-as* '(:hash-table :plist)))
   (if (or ignore-checks 
           (or (not (boundp '*token*))
               (null *token*)
@@ -66,11 +48,11 @@
                  :headers '(("Accept" . "application/json")
                             ("Accept-Language" . "en_US"))
                  :content '(("grant_type" . "client_credentials")))
-       (let ((token (parse-token *parse-as* (jojo:parse resp :as *parse-as*))))
+       (let ((token (parse-token (read-json resp))))
          (values
           (setf *token* token)
           (make-instance (determine-good-class status) :body (list token)))))
-    *token*))
+      *token*))
 
 (defmethod expiredp (token)
   (error 'unbound-token))

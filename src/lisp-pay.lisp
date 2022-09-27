@@ -2,15 +2,6 @@
 
 (in-package #:lisp-pay)
 
-(defclass processor ()
-  ((base-url
-    :accessor base-url
-    :initarg :base-url)
-   (api-metaclass
-    :accessor api-metaclass)))
-
-(defclass testing-processor (processor)
-  ())
 
 (defparameter *processor* (make-instance 'processor))
 
@@ -33,6 +24,7 @@
                                 (:genned-slot-names ,names)
                                 (:query-slot-names ,query-slot-names)
                                 (:endpoint ,endpoint))))))
+            (export ',name)
             (c2mop:ensure-finalized class)
             (let* ((direct-slots (c2mop:class-direct-slots class))
                    (direct-query-slots

@@ -60,13 +60,13 @@
 
 ;;;Apps https://docs.btcpayserver.org/API/Greenfield/v1/#tag/Apps
 
-(defapi apps%new ("/api/v1/stores/:store-id/apps/pos" post-request)
+(defapi stores-apps%new ("/api/v1/stores/:store-id/apps/pos" post-request)
         ())
 
-(defapi apps%get ("/api/v1/apps/:app-id" get-request)
+(defapi stores-apps%get ("/api/v1/apps/:app-id" get-request)
         ())
 
-(defapi apps%delete ("/api/v1/apps/:app-id" delete-request)
+(defapi stores-apps%delete ("/api/v1/apps/:app-id" delete-request)
         ())
 
 ;;;authorization https://docs.btcpayserver.org/API/Greenfield/v1/#tag/Authorization
@@ -98,37 +98,37 @@
 
 ;;;custodians https://docs.btcpayserver.org/API/Greenfield/v1/#tag/Custodians
 
-(defapi custodians%all ("/api/v1/custodians" get-request)
+(defapi stores-custodians%all ("/api/v1/custodians" get-request)
         ())
 
-(defapi custodians%get ("/api/v1/stores/:store-id/custodian-accounts" get-request)
+(defapi stores-custodians%get ("/api/v1/stores/:store-id/custodian-accounts" get-request)
         ((asset-balances
           :initarg :asset-balances
           :as-string "assetBalances"
           :initform nil 
           :type bool)))
 
-(defapi custodians%new ("/api/v1/stores/:store-id/custodian-accounts" post-request)
+(defapi stores-custodians%new ("/api/v1/stores/:store-id/custodian-accounts" post-request)
         ())
 
+(defapi stores-custodians%get-account
+    ("/api/v1/stores/:store-id/custodian-accounts/:account-id"
+     get-request)
+    ((asset-balances
+      :initarg :asset-balances
+      :as-string "assetBalances"
+      :initform nil
+      :type bool)))
 
-(defapi custodians%get-account ("/api/v1/stores/:store-id/custodian-accounts/:account-id"
-                                get-request)
-        ((asset-balances
-          :initarg :asset-balances
-          :as-string "assetBalances"
-          :initform nil
-          :type bool)))
-
-(defapi custodians%update-account
+(defapi stores-custodians%update-account
     ("/api/v1/stores/:store-id/custodian-accounts/:account-id" put-request)
     ())
 
-(defapi custodians%delete-account
+(defapi stores-custodians%delete-account
     ("/api/v1/stores/:store-id/custodian-accounts/:account-id" delete-request)
     ())
 
-(defapi custodians%get-trading-quote
+(defapi stores-custodians%get-trading-quote
     ("/api/v1/stores/:store-id/custodian-accounts/:account-id/trades/quote" get-request)
     ((from-asset
       :initarg :from-asset
@@ -139,19 +139,19 @@
       :as-string "toAsset"
       :type string)))
 
-(defapi custodians%trade-assets
+(defapi stores-custodians%trade-assets
     ("/api/v1/stores/:store-id/custodian-accounts/:account-id/trades/market"
      post-request))
 
-(defapi custodians%get-depost-address
+(defapi stores-custodians%get-depost-address
     ("/api/v1/stores/:store-id/custodian-accounts/:account-id/addresses/:payment-method"
      get-request))
 
-(defapi custodians%withdraw-to-store-wallet
+(defapi stores-custodians%withdraw-to-store-wallet
     ("/api/v1/stores/:store-id/custodian-accounts/:account-id/withdrawals"
      post-request))
 
-(defapi custodians%get-withdrawal-info
+(defapi stores-custodians%get-withdrawal-info
     ("/api/v1/stores/:store-id/custodian-accounts/:account-id/withdrawals/:withdrawal-id"
      get-request))
 
@@ -162,17 +162,18 @@
 
 ;;;invoices https://docs.btcpayserver.org/API/Greenfield/v1/#tag/Invoices
 
-(defapi invoices%all ("/api/v1/stores/:store-id/invoices" get-request))
+(defapi stores-invoices%all ("/api/v1/stores/:store-id/invoices" get-request))
 
-(defapi invoices%create ("/api/v1/stores/:store-id/invoices" post-request))
+(defapi stores-invoices%create ("/api/v1/stores/:store-id/invoices" post-request))
 
-(defapi invoices%get ("/api/v1/stores/:store-id/invoices/:invoice-id" get-request))
+(defapi stores-invoices%get ("/api/v1/stores/:store-id/invoices/:invoice-id" get-request))
 
-(defapi invoices%archive ("/api/v1/stores/:store-id/invoices/:invoice-id" delete-request))
+(defapi stores-invoices%archive
+    ("/api/v1/stores/:store-id/invoices/:invoice-id" delete-request))
 
-(defapi invoices%update ("/api/v1/stores/:store-id/invoices/:invoice-id" put-request))
+(defapi stores-invoices%update ("/api/v1/stores/:store-id/invoices/:invoice-id" put-request))
 
-(defapi invoices%payment-methods
+(defapi stores-invoices%payment-methods
     ("/api/v1/stores/:store-id/invoices/:invoice-id/payment-methods" get-request)
     ((only-accounted-payments
       :initarg :only-accounted-payments
@@ -180,15 +181,15 @@
       :initform t
       :type bool)))
 
-(defapi invoices%mark-status ("/api/v1/stores/:store-id/invoices/:invoice-id/status"
-                              post-request)
+(defapi stores-invoices%mark-status ("/api/v1/stores/:store-id/invoices/:invoice-id/status"
+                                     post-request)
         ())
 
-(defapi invoices%unarchive ("/api/v1/stores/:store-id/invoices/:invoice-id/unarchive"
-                            post-request)
+(defapi stores-invoices%unarchive ("/api/v1/stores/:store-id/invoices/:invoice-id/unarchive"
+                                   post-request)
         ())
 
-(defapi invoices%activate-payment-method
+(defapi stores-invoices%activate-payment-method
     ("/api/v1/stores/:store-id/invoices/:invoice-id/payment-methods/:payment-method/activate"
      post-request)
     ())
@@ -239,44 +240,44 @@
 ;;;lightning (store)
 ;;;https://docs.btcpayserver.org/API/Greenfield/v1/#tag/Lightning-(Store)
 
-(defapi lightning-store%info ("/api/v1/stores/:store-id/lightning/:crypto-code/info"
-                              get-request)
+(defapi stores-lightning%info ("/api/v1/stores/:store-id/lightning/:crypto-code/info"
+                               get-request)
         ())
 
-(defapi lightning-store%balance
+(defapi stores-lightning%balance
     ("/api/v1/stores/:store-id/lightning/:crypto-code/balance" get-request)
     ())
 
-(defapi lightning-store%connect
+(defapi stores-lightning%connect
     ("/api/v1/stores/:store-id/lightning/:crypto-code/connect" post-request)
     ())
 
-(defapi lightning-store%get-channels
+(defapi stores-lightning%get-channels
     ("/api/v1/stores/:store-id/lightning/:crypto-code/channels" get-request)
     ())
 
-(defapi lightning-store%open-channel
+(defapi stores-lightning%open-channel
     ("/api/v1/stores/:store-id/lightning/:crypto-code/channels" post-request)
     ())
 
-(defapi lightning-store%deposit-address
+(defapi stores-lightning%deposit-address
     ("/api/v1/stores/:store-id/lightning/:crypto-code/address" post-request)
     ())
 
-(defapi lightning-store%get-payment
+(defapi stores-lightning%get-payment
     ("/api/v1/stores/:store-id/lightning/:crypto-code/payments/:payment-hash" get-request)
     ())
 
-(defapi lightning-store%get-invoice
+(defapi stores-lightning%get-invoice
     ("/api/v1/stores/:store-id/lightning/:crypto-code/invoices/:invoice-id" get-request)
     ())
 
-(defapi lightning-store%pay-invoice
+(defapi stores-lightning%pay-invoice
     ("/api/v1/stores/:store-id/lightning/:crypto-code/invoices/pay" post-request)
     ())
 
 
-(defapi lightning-store%create-invoice
+(defapi stores-lightning%create-invoice
     ("/api/v1/stores/:store-id/lightning/:crypto-code/invoices" post-request)
     ())
 
@@ -507,37 +508,37 @@
 ;;;store payment methods lightning
 ;;;https://docs.btcpayserver.org/API/Greenfield/v1/#tag/Store-Payment-Methods-(Lightning-Network)
 
-(defapi store-payment-methods-lightning%all
+(defapi stores-payment-methods-lightning%all
     ("/api/v1/stores/:store-id/payment-methods/LightningNetwork"
      get-request))
 
-(defapi store-payment-methods-lightning%get
+(defapi stores-payment-methods-lightning%get
     ("/api/v1/stores/:store-id/payment-methods/LightningNetwork/:crypto-code"
      get-request))
 
-(defapi store-payment-methods-lightning%update
+(defapi stores-payment-methods-lightning%update
     ("/api/v1/stores/:store-id/payment-methods/LightningNetwork/:crypto-code"
      put-request))
 
-(defapi store-payment-methods-lightning%remove
+(defapi stores-payment-methods-lightning%remove
     ("/api/v1/stores/:store-id/payment-methods/LightningNetwork/:crypto-code"
      delete-request))
 
 ;;;store payment methods lnurl
 ;;;https://docs.btcpayserver.org/API/Greenfield/v1/#tag/Store-Payment-Methods-(LNURL-Pay)
-(defapi store-payment-methods-lnurl%all
+(defapi stores-payment-methods-lnurl%all
     ("/api/v1/stores/:store-id/payment-methods/LNURL"
      get-request))
 
-(defapi store-payment-methods-lnurl%get
+(defapi stores-payment-methods-lnurl%get
     ("/api/v1/stores/:store-id/payment-methods/LNURL/:crypto-code"
      get-request))
 
-(defapi store-payment-methods-lnurl%update
+(defapi stores-payment-methods-lnurl%update
     ("/api/v1/stores/:store-id/payment-methods/LNURL/:crypto-code"
      put-request))
 
-(defapi store-payment-methods-lnurl%remove
+(defapi stores-payment-methods-lnurl%remove
     ("/api/v1/stores/:store-id/payment-methods/LNURL/:crypto-code"
      delete-request))
 
@@ -548,27 +549,27 @@
 ;;;store payment methods on chain
 ;;;https://docs.btcpayserver.org/API/Greenfield/v1/#tag/Store-Payment-Methods-(On-Chain)
 
-(defapi store-payment-methods-on-chain%all
+(defapi stores-payment-methods-on-chain%all
     ("/api/v1/stores/:store-id/payment-methods/OnChain"
      get-request))
 
-(defapi store-payment-methods-on-chain%get
+(defapi stores-payment-methods-on-chain%get
     ("/api/v1/stores/:store-id/payment-methods/OnChain/:crypto-code"
      get-request))
 
-(defapi store-payment-methods-on-chain%update
+(defapi stores-payment-methods-on-chain%update
     ("/api/v1/stores/:store-id/payment-methods/OnChain/:crypto-code"
      put-request))
 
-(defapi store-payment-methods-on-chain%remove
+(defapi stores-payment-methods-on-chain%remove
     ("/api/v1/stores/:store-id/payment-methods/OnChain/:crypto-code"
      delete-request))
 
-(defapi store-payment-methods-on-chain%generate-wallet
+(defapi stores-payment-methods-on-chain%generate-wallet
     ("/api/v1/stores/:store-id/payment-methods/OnChain/:crypto-code/generate"
      post-request))
 
-(defapi store-payment-methods-on-chain%preview
+(defapi stores-payment-methods-on-chain%preview
     ("/api/v1/stores/:store-id/payment-methods/OnChain/:crypto-code/preview"
      get-request)
     ((offset
@@ -578,7 +579,7 @@
       :initarg :amount
       :type fixnum)))
 
-(defapi store-payment-methods-on-chain%preview-proposed
+(defapi stores-payment-methods-on-chain%preview-proposed
     ("/api/v1/stores/:store-id/payment-methods/OnChain/:crypto-code/preview"
      post-request)
     ((offset
@@ -724,17 +725,3 @@
 (defapi users%lock
     ("/api/v1/users/:user-id-or-email/lock"
      delete-request))
-
-
-
-
-
-
-
-
-
-
-
-
-
-

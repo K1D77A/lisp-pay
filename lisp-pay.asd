@@ -23,13 +23,14 @@
   :components ((:file "package")
                (:file "conditions")
                (:file "helpers")
-               (:file "response")
                (:file "protocol")
+               (:file "response")
                (:file "mop")
                (:file "lisp-pay")
                (:module "btcpay"
                 :components ((:file "package")
-                             (:file "protocol")))
+                             (:file "protocol")
+                             (:file "btcpay")))
                ;; (:module "stripe"
                ;;  :components ((:file "package")
                ;;               (:file "conditions")
