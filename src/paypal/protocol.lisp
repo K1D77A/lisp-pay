@@ -30,29 +30,26 @@
 (defvar *processor*
   (make-instance 'paypal-testing))
 
-(defgeneric generate-headers (req)
-  (:method-combination append :most-specific-last))
-
-(defmethod generate-headers :around (req)
-  (is-token-non-nil)
-  (is-token-bound)
-  (is-expired-token *token*)
-  `(:headers ,(call-next-method)))
-
-(defmethod content-type (req)
-  "application/json")
-
-(defmethod content-type ((req request))
-  (slot-value req 'content-type))
-
-(defmethod generate-headers append (req)
-  `(("Content-Type" . ,(content-type req))
-    ("Authorization" . ,(format nil "Bearer ~A" (access-token *token*)))))
-
-(defmethod generate-headers append ((req request))
+(defmethod generate-dex-list append ((processor paypal) req)
   (declare (special *request-headers*))
-  (when (boundp '*request-headers*)
-    *request-headers*))
+  (is-token-non-nil processor)
+  (is-token-bound processor)
+  (is-expired-token (token processor))
+  `(:headers (append (("Content-Type" . (content-type req))
+                      ("Authorization" . (format nil "Bearer ~A" (token processor))))
+                     (when (boundp '*special-headers*)
+                       *special-headers*))))
+
+(defmethod generate-dex-list append ((processor paypal) (req request-with-content))
+  `(:content (write-json ,(content req) nil)))
+
+(defmethod %call-api :around ((processor paypal) request)
+  (restart-case
+      (call-next-method)
+    (missing-token ()
+      :report "Token could be broken, refresh and try again?"
+      (get-token)
+      (call-next-method))))
 
 ;; (defmethod call-api (req)
 ;;   (flet ((body (req)

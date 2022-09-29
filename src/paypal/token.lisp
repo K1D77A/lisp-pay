@@ -35,24 +35,28 @@
                           (local-time:timestamp+ (local-time:now) |expires_in| :sec)
                           :app-id |app_id| :token-type |token_type|)))
 
-(defun get-token (&optional (ignore-checks nil))
-  (if (or ignore-checks 
-          (or (not (boundp '*token*))
-              (null *token*)
-              (expiredp *token*)))
-      (wrapped-dex-call
-       (resp status)
-       (dex:post (format nil "~A/v1/oauth2/token"
-                         (generate-url t))
-                 :basic-auth `(,*client* . ,*secret*)
-                 :headers '(("Accept" . "application/json")
-                            ("Accept-Language" . "en_US"))
-                 :content '(("grant_type" . "client_credentials")))
-       (let ((token (parse-token (read-json resp))))
-         (values
-          (setf *token* token)
-          (make-instance (determine-good-class status) :body (list token)))))
-      *token*))
+(defun get-token (processor &optional (ignore-checks nil))
+  (with-accessors ((token token)
+                   (client client)
+                   (secret secret))
+      processor 
+    (if (or ignore-checks 
+            (or (not (slot-boundp processor 'token))
+                (null token)
+                (expiredp token)))
+        (wrapped-dex-call
+         (resp status)
+         (dex:post (format nil "~A/v1/oauth2/token"
+                           (generate-url t))
+                   :basic-auth `(,client . ,secret)
+                   :headers '(("Accept" . "application/json")
+                              ("Accept-Language" . "en_US"))
+                   :content '(("grant_type" . "client_credentials")))
+         (let ((new-token (parse-token (read-json resp))))
+           (values
+            (setf token new-token)
+            (make-instance (determine-good-class status) :body (list token)))))
+        new-token)))
 
 (defmethod expiredp (token)
   (error 'unbound-token))
@@ -64,8 +68,8 @@
     (let* ((now (local-time:now)))
       (local-time:timestamp<= expires-in now))))
 
-(defun is-token-non-nil ()
-  (unless *token*
+(defun is-token-non-nil (processor)
+  (unless (token processor)
     (error 'unbound-token)))
 
 (defmethod is-expired-token (token)
@@ -75,6 +79,6 @@
   (when (expiredp token)
     (error 'expired-token :token token)))
 
-(defmethod is-token-bound ()
-  (unless (boundp '*token*)
+(defmethod is-token-bound (processor)
+  (unless (slot-boundp processor 'token)
     (error 'unbound-token)))
