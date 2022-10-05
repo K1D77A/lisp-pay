@@ -118,13 +118,18 @@ Many helpers for defining MOP protocols for API wrappers.
 (defgeneric generate-dex-list (processor request)
   (:method-combination append :most-specific-last))
 
-
-
 (defgeneric call-api (request)
   (:documentation "Generic means of making per processor requests."))
 
 (defmethod call-api (request)
   (%call-api (symbol-value (find-symbol "*PROCESSOR*")) request))
+
+(defmacro wrap-dex-call (&body body)
+  `(new-dex-response
+    (handler-case
+        (multiple-value-list (locally ,@body))
+      (dexador:http-request-failed (c)
+        c))))
 
 (defmethod %call-api (processor request)
   "Call the API using PROCESSOR. Use an :around with your processor to establish restarts."

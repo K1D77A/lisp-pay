@@ -35,6 +35,7 @@
            #:generate-url
            #:generate-dex-list
            #:defapi
+           #:wrap-dex-call
 
            ;;mop
            #:lisp-pay-api-call
@@ -48,7 +49,8 @@
            #:query-constructor
            #:request
            #:request-fun
-           #:content 
+           #:content
+           #:content-type
            #:request-without-content
            #:get-request
            #:delete-request
@@ -58,6 +60,7 @@
            #:put-request
            #:patch-request
            #:response
+           #:api-failure
 
            ;;response
            #:construct-api-failure-object

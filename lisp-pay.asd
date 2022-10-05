@@ -38,15 +38,14 @@
                ;;               (:file "protocol")
                ;;               (:file "stripe")
                ;;               (:file "webhooks")))
-               ;; (:module "paypal"
-               ;;  :components ((:file "package")
-               ;;               (:file "conditions")
-               ;;               (:file "helpers")
-               ;;               (:file "protocol")
-               ;;               (:file "token")
-               ;;               (:file "paypal")
-               ;;               (:file "response")
-               ;;               (:file "webhook-verify")))
+               (:module "paypal"
+                :components ((:file "package")
+                             (:file "conditions")
+                             (:file "helpers")
+                             (:file "protocol")
+                             (:file "token")
+                             (:file "paypal")
+                             (:file "webhook-verify")))
                (:module "coinpayments"
                 :components ((:file "package")
                              (:file "classes")

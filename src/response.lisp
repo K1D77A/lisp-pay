@@ -140,12 +140,6 @@ This can be specialized for a more advanced response object like those provided 
 (defmethod signal-when-condition (processor c)
   c)
 
-(defmacro wrap-dex-call (&body body)
-  `(new-dex-response
-    (handler-case
-        (multiple-value-list (locally ,@body))
-      (dexador:http-request-failed (c)
-        c))))
 
 (defgeneric construct-api-failure-object (processor api-response)
   (:documentation "Take the API-response condition and post process it into a 

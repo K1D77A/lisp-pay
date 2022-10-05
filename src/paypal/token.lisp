@@ -44,19 +44,16 @@
             (or (not (slot-boundp processor 'token))
                 (null token)
                 (expiredp token)))
-        (wrapped-dex-call
-         (resp status)
-         (dex:post (format nil "~A/v1/oauth2/token"
-                           (generate-url t))
-                   :basic-auth `(,client . ,secret)
-                   :headers '(("Accept" . "application/json")
-                              ("Accept-Language" . "en_US"))
-                   :content '(("grant_type" . "client_credentials")))
-         (let ((new-token (parse-token (read-json resp))))
-           (values
-            (setf token new-token)
-            (make-instance (determine-good-class status) :body (list token)))))
-        new-token)))
+        (let ((res (construct-response-from-api
+                    processor
+                    (wrap-dex-call 
+                      (dex:post (format nil "~A/v1/oauth2/token"
+                                        (base-url processor))
+                                :basic-auth `(,client . ,secret)
+                                :headers '(("Accept" . "application/json")
+                                           ("Accept-Language" . "en_US"))
+                                :content '(("grant_type" . "client_credentials")))))))
+          (setf token (parse-token (body res)))))))
 
 (defmethod expiredp (token)
   (error 'unbound-token))

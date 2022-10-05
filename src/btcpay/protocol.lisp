@@ -11,7 +11,6 @@
    (base-url 
     :initform "https://btcpay.test.btcbank.li")))
 
-
 (defparameter *processor*
   (make-instance 'btcpay))
 
@@ -19,9 +18,9 @@
   `(:headers (("Authorization" . ,(format nil "token ~A" (api-key processor))))))
 
 (defmethod generate-dex-list append ((processor btcpay) (req request-with-content))
-  `(:content (write-json ,(content req) nil)))
+  `(:content ,(write-json (content req) nil)))
 
-(defclass btcpay-api-failure-obj ()
+(defclass btcpay-api-failure-obj (api-failure)
   ((code
     :accessor code
     :initarg :code)

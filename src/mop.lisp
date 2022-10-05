@@ -65,7 +65,11 @@ of the slot name when encoding in the Query string.")))
   ((request-fun
     :reader request-fun
     :initarg :request-fun
-    :initform 'dex:get))
+    :initform 'dex:get)
+   (content-type
+    :accessor content-type
+    :initarg :content-type
+    :initform "application/json"))
   (:documentation "Top level request class")
   (:metaclass lisp-pay-api-call))
 
@@ -105,13 +109,13 @@ of the slot name when encoding in the Query string.")))
   ((request-fun :initform 'dex:put))
   (:metaclass lisp-pay-api-call))
 
-(defclass patch-request (request)
-  ((request-fun :initform 'dex:patch)
-   (patch-request
-    :accessor patch-request
-    :initarg :patch-request))
+(defclass patch-request (request-with-content)
+  ((request-fun :initform 'dex:patch))
   (:metaclass lisp-pay-api-call))
 
 (defclass response ()
   ()
   (:documentation "Top level response class"))
+
+(defclass api-failure ()
+  ())
