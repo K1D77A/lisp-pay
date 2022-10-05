@@ -46,12 +46,14 @@
 
 (defapi billing%list-transactions
     ("/v1/payments/billing-agreements/:agreement-id/transactions" get-request)
-    ((start_date
+    ((start-date
       :accessor start-date
-      :initarg start-date)
-     (end_date
+      :initarg start-date
+      :as-string "start_date")
+     (end-date
       :accessor end-date
-      :initarg :end-date)))
+      :initarg :end-date
+      :as-string "end-date")))
 
 (defapi billing%execute
     ("/v1/payments/billing-agreements/:agreement-id/agreement-execute" post-request)
@@ -59,15 +61,17 @@
 
 ;;;catalog products
 (defapi products%list ("/v1/catalogs/products" get-request)
-        ((page_size
+        ((page-size
           :accessor page-size
-          :initarg :page-size)
+          :initarg :page-size
+          :as-string "page_size")
          (page
           :accessor page
           :initarg :page)
-         (total_required
+         (total-required
           :accessor total-requried
-          :initarg :total-required)))
+          :initarg :total-required
+          :as-string "total_required")))
 
 (defapi products%create ("/v1/catalogs/products" post-request)
         ())
@@ -82,27 +86,34 @@
 
 ;;;disputes
 (defapi disputes%get ("/v1/customer/disputes" get-request)
-        ((start_time
+        ((start-time
           :accessor start-time
-          :initarg :start-time)
-         (disputed_transaction_id
+          :initarg :start-time
+          :as-string "start_time")
+         (disputed-transaction-id
           :accessor disputed-transaction_id
-          :initarg :disputed-transaction_id)
-         (page_size
+          :initarg :disputed-transaction_id
+          :as-string "disputed_transaction_id")
+         (page-size
           :accessor page-size 
-          :initarg :page-size)
-         (next_page_token
+          :initarg :page-size
+          :as-string "page_size")
+         (next-page-token
           :accessor next-page-token
-          :initarg :next-page-token)
-         (dispute_state
+          :initarg :next-page-token
+          :as-string "next_page_token")
+         (dispute-state
           :accessor dispute-state
-          :initarg :dispute-state)
-         (update_time_before
+          :initarg :dispute-state
+          :as-string "dispute_state")
+         (update-time-before
           :accessor update-time-before
-          :initarg :update-time-before)
-         (update_time_after
+          :initarg :update-time-before
+          :as-string "update_time_before")
+         (update-time-after
           :accessor update-time-after
-          :initarg :update-time-after)))
+          :initarg :update-time-after
+          :as-string "update_time_after")))
 
 (defapi disputes%update ("/v1/customer/disputes/:dispute-id" patch-request)
         ())
@@ -198,15 +209,17 @@
         ())
 
 (defapi invoices%list ("/v2/invoicing/invoices" get-request)
-        ((page_size
+        ((page-size
           :accessor page-size
-          :initarg :page-size)
+          :initarg :page-size
+          :as-string "page_size")
          (page
           :accessor page
           :initarg :page)
-         (total_required
+         (total-required
           :accessor total-requried
-          :initarg :total-required)
+          :initarg :total-required
+          :as-string "total_required")
          (fields
           :accessor fields
           :initarg :fields)))
@@ -221,12 +234,14 @@
 
 (defapi invoices%update-invoice ("/v2/invoicing/invoices/:invoice-id"
                                  put-request)
-        ((send_to_recipient
+        ((send-to-recipient
           :accessor send-to-recipient
-          :initarg :send-to-recipient)
+          :initarg :send-to-recipient
+          :as-string "send_to_recipient")
          (send_to_invoicer
           :accessor send-to-invoicer
-          :initarg :send-to-invoicer)))
+          :initarg :send-to-invoicer
+          :as-string "send_to_invoicer")))
 
 (defapi invoices%details ("/v2/invoicing/invoices/:invoice-id"
                           get-request)
@@ -270,20 +285,23 @@
     ());;has the Paypal-Request-Id header
 
 (defapi invoices%search ("/v2/invoicing/search-invoices" post-request)
-        ((page_size
+        ((page-size
           :accessor page-size
-          :initarg :page-size)
+          :initarg :page-size
+          :as-string "page_size")
          (page
           :accessor page
           :initarg :page)
          (total_required
           :accessor total-requried
-          :initarg :total-required)))
+          :initarg :total-required
+          :as-string "total_required")))
 
 (defapi invoices-templates%list ("/v2/invoicing/templates" get-request)
-        ((page_size
+        ((page-size
           :accessor page-size
-          :initarg :page-size)
+          :initarg :page-size
+          :as-string "page_size")
          (page
           :accessor page
           :initarg :page)
@@ -394,18 +412,20 @@
 
 (defapi payouts-batch%details
     ("/v1/payments/payouts/:batch-id" get-request)
-    ((page_size
+    ((page-size
       :accessor page-size
-      :initarg :page-size)
+      :initarg :page-size
+      :as-string "page_size")
      (page
       :accessor page
       :initarg :page)
      (fields
       :accessor fields
       :initarg :fields)
-     (total_required
+     (total-required
       :accessor total-required
-      :initarg :total-required)))
+      :initarg :total-required
+      :as-string "total_required")))
 
 (defapi payouts-item%details
     ("/v1/payments/payouts-item/:payout-id" get-request)
@@ -423,18 +443,20 @@
 
 (defapi referenced-payouts-batch%details
     ("/v1/payments/referenced-payouts/:batch-id" get-request)
-    ((page_size
+    ((page-size
       :accessor page-size
-      :initarg :page-size)
+      :initarg :page-size
+      :as-string "page_size")
      (page
       :accessor page
       :initarg :page)
      (fields
       :accessor fields
       :initarg :fields)
-     (total_required
+     (total-required
       :accessor total-required
-      :initarg :total-required)))
+      :initarg :total-required
+      :as-string "total_required")))
 
 (defapi referenced-payouts-item%create
     ("/v1/payments/referenced-payouts-items" post-request)
@@ -446,21 +468,25 @@
 
 ;;;subscriptions
 (defapi subscriptions-plans%list ("/v1/billing/plans" get-request)
-        ((page_size
+        ((page-size
           :accessor page-size
-          :initarg :page-size)
+          :initarg :page-size
+          :as-string "page_size")
          (page
           :accessor page
           :initarg :page)
-         (product_id
+         (product-id
           :accessor product-id
-          :initarg :product-id)
-         (plan_ids 
+          :initarg :product-id
+          :as-string "product_id")
+         (plan-ids 
           :accessor plan-ids 
-          :initarg :plan-ids)
-         (total_required
+          :initarg :plan-ids
+          :as-string "plan_ids")
+         (total-required
           :accessor total-required
-          :initarg :total-required)))
+          :initarg :total-required
+          :as-string "total_required")))
 
 (defapi subscribtions-plans%create ("/v1/billing/plans" post-request)
         ());;has prefer request-id
@@ -507,72 +533,89 @@
 
 (defapi subscriptions%transactions ("/v1/billing/subscriptions/:sub-id/transactions"
                                     post-request)
-        ((start_time
+        ((start-time
           :accessor start-time 
-          :initarg :start-time)
-         (end_time 
+          :initarg :start-time
+          :as-string "start_time")
+         (end-time 
           :accessor end-time 
-          :initarg :end-time)))
+          :initarg :end-time
+          :as-string "end_time")))
 
 ;;;search
 (defapi search-transactions%list ("/v1/reporting/transactions" get-request)
-        ((transaction_id
+        ((transaction-id
           :accessor transaction-id
-          :initarg :transaction-id)
-         (transaction_type
+          :initarg :transaction-id
+          :as-string "transaction_id")
+         (transaction-type
           :accessor transaction-type
-          :initarg :transaction-type)
-         (transaction_status
+          :initarg :transaction-type
+          :as-string "transaction_type")
+         (transaction-status
           :accessor transaction-status
-          :initarg :transaction-status)
-         (transaction_amount
+          :initarg :transaction-status
+          :as-string "transaction_status")
+         (transaction-amount
           :accessor transaction-amount
-          :initarg :transaction-amount)
-         (transaction_currency
+          :initarg :transaction-amount
+          :as-string "transaction_amount")
+         (transaction-currency
           :accessor transaction-currency
-          :initarg :transaction-currency)
-         (start_date
+          :initarg :transaction-currency
+          :as-string "transaction_currency")
+         (start-date
           :accessor start-date 
-          :initarg :start-date)
-         (end_date
+          :initarg :start-date
+          :as-string "start_date")
+         (end-date
           :accessor end-date 
-          :initarg :end-date)
-         (payment_instrument_type
+          :initarg :end-date
+          :as-string "end_date")
+         (payment-instrument-type
           :accessor payment-instrument-type
-          :initarg :payment-instrument-type)
-         (store_id 
+          :initarg :payment-instrument-type
+          :as-string "payment_instrument_type")
+         (store-id 
           :accessor store-id
-          :initarg :store-id)
-         (terminal_id
+          :initarg :store-id
+          :as-string "store_id")
+         (terminal-id
           :accessor terminal-id 
-          :initarg :terminal-id)
+          :initarg :terminal-id
+          :as-string "terminal_id")
          (fields
           :accessor fields
           :initarg :fields)
-         (balance_affecting_records_only
+         (balance-affecting-records-only
           :accessor balance-affecting-records-only
-          :initarg :balance-affecting-records-only)
-         (page_size 
+          :initarg :balance-affecting-records-only
+          :as-string "balance_affecting_records_only")
+         (page-size
           :accessor page-size 
-          :initarg :page-size)
+          :initarg :page-size
+          :as-string "page_size")
          (page
           :accessor page
           :initarg :page)))
 
 (defapi search-balances%list ("/v1/reporting/balances" get-request)
-        ((as_of_time
+        ((as-of-time
           :accessor as-of-time
-          :initarg :as-of-time)
-         (currency_code
+          :initarg :as-of-time
+          :as-string "as_of_time")
+         (currency-code
           :accessor currency-code
-          :initarg :currency-code)))
+          :initarg :currency-code
+          :as-string "currency_code")))
 
 
 ;;;webhooks
 (defapi webhooks%list ("/v1/notifications/webhooks" get-request)
-        ((anchor_time
+        ((anchor-time
           :accessor anchor-time
-          :initarg :anchor-time)))
+          :initarg :anchor-time
+          :as-string "anchor_time")))
 
 (defapi webhooks%create ("/v1/notifications/webhooks" post-request)
         ())
@@ -606,12 +649,15 @@
          (event_type
           :accessor event-type
           :initarg :event-type)
-         (start_time
+         
+         (start-time
           :accessor start-time 
-          :initarg :start-time)
-         (end_time 
+          :initarg :start-time
+          :as-string "start_time")
+         (end-time
           :accessor end-time 
-          :initarg :end-time)))
+          :initarg :end-time
+          :as-string "end_time")))
 
 (defapi webhooks%notification-details ("/v1/notifications/webhooks-events/:event-id"
                                        get-request)
