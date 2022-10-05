@@ -1,12 +1,9 @@
 (in-package #:lisp-pay/stripe)
 
-(defparameter *parse-as* :plist
-  "Used to parse data with call-api. Defaults to jojo's :plist, can be any valid parser key, best use :hash-table")
-
 (define-condition stripe-condition (lisp-pay-condition)
   ())
 
-(define-condition stripe-api-condition (stripe-condition api-response-condition)
+(class*:defclass* stripe-api-class (api-failure)
   ((error-type
     :accessor error-type
     :initarg :error-type)
@@ -42,28 +39,30 @@
     :initarg :setup-intent)
    (source
     :accessor source
-    :initarg :source)))
+    :initarg :source))
+  (:export-class-name-p t)
+  (:export-accessor-names-p t))
 
-(define-condition api-error (stripe-api-condition)
+(class*:defclass* api-error (stripe-api-class)
   ((error-type :initform "api_error"))
   (:documentation "API errors cover any other type of problem (e.g., a temporary problem with Stripe's servers), and are extremely uncommon."))
 
-(define-condition card-error (stripe-api-condition)
+(class*:defclass* card-error (stripe-api-class)
   ((error-type :initform "card_error")
    (charge
     :accessor charge
     :initarg :charge))
   (:documentation "Card errors are the most common type of error you should expect to handle. They result when the user enters a card that can't be charged for some reason."))
 
-(define-condition indempotency-error (stripe-api-condition)
+(class*:defclass* indempotency-error (stripe-api-class)
   ((error-type :initform "indempotency_error"))
   (:documentation "Idempotency errors occur when an Idempotency-Key is re-used on a request that does not match the first request's API endpoint and parameters."))
 
-(define-condition invalid-request-error (stripe-api-condition)
+(class*:defclass* invalid-request-error (stripe-api-class)
   ((error-type :initform "invalid_request_error"))
   (:documentation "Invalid request errors arise when your request has invalid parameters."))
 
-(defun %determine-condition-class (type)
+(defun %determine-error-class (type)
   (cond ((string= type "invalid_request_error")
          'invalid-request-error)
         ((string= type "card_error")
@@ -74,13 +73,12 @@
          'api-error)
         (t (error "received an error code that is unexpected."))))
 
-
 (defmethod %error-key->slot-name (key)
   (let ((alist 
           '(("type" . nil)
             ("message" . nil)
             ("code" . status-code)
-            ("decline_code" . decline_code)
+            ("decline_code" . decline-code)
             ("param" . param)
             ("payment_intent" . payment-intent)
             ("charge" . charge)
@@ -91,18 +89,11 @@
             ("source" . source))))
     (cdr (assoc key alist :test #'string=))))
 
-
-(defgeneric %failed-request-to-condition (request)
-  (:documentation "Convert a failed request to a condition using *parse-as*"))
-
-(defmethod %failed-request-to-condition (condition)
-  "Converts the error returned by Dex into a nice stripe condition."
-  (let* ((http-body (dexador.error:response-body condition))
-         (parsed (read-json http-body))
-         (err (gethash "error" parsed))
-         (type (gethash "type" err))
-         (message (gethash "message" err)))
-    (let ((obj (make-instance (%determine-condition-class type)
+(defmethod construct-api-failure-object ((processor stripe)
+                                         response)
+  (with-hash-keys (|error| |type|)
+      (gethash "type" (body response))
+    (let ((obj (make-instance (%determine-error-class type)
                               :message message
                               :parent-condition condition)))
       (maphash (lambda (key val)
@@ -110,22 +101,7 @@
                    (when slot-name
                      (setf (slot-value obj slot-name) val))))
                parsed)
-      (error obj))))
-
-(defmethod print-object ((obj stripe-api-condition) stream)
-  (print-unreadable-object (obj stream :type t :identity t)
-    (let ((slots (c2mop:class-slots (class-of obj))))
-      (format stream "~%")
-      (mapc (lambda (slot)
-              (let ((name (c2mop:slot-definition-name slot)))
-                (when (slot-boundp obj name)
-                  (format stream "~A: ~A~%" name (slot-value obj name)))))
-            slots))))
-
-(defmacro with-captured-api-failure (&body body)
-  `(handler-case (locally ,@body)
-     (dexador.error:http-request-failed (c)
-       (%failed-request-to-condition *parse-as* c))))
+      obj)))
 
 
 

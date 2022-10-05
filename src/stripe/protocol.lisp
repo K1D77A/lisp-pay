@@ -1,61 +1,39 @@
 (in-package #:lisp-pay/stripe)
 
-(defmacro defapi (name (endpoint super) &optional query-slots)
-  (let* ((slots (slots-from-url endpoint))
-         (names (mapcar #'first slots))
-         (query-slot-names (mapcar #'first query-slots)))
-    `(let ((class 
-             (defclass ,name (,super)
-               ,(append slots query-slots)
-               ,@(append `((:metaclass lisp-pay-api-call)
-                           (:genned-slot-names ,names)
-                           (:query-slot-names ,query-slot-names)
-                           (:endpoint ,endpoint))))))
-       (c2mop:ensure-finalized class)
-       (with-slots (string-constructor headers
-                    query-constructor query-slot-names)
-           class
-         (setf (string-constructor class) (gen-url-generator class))
-         (when ',query-slots
-           (setf (query-constructor class)
-                 (gen-query-generator class query-slot-names)))))))
+(defprocessor stripe lisp-pay-api-call
+  ((api-key
+    :accessor api-key
+    :initarg :api-key
+    :initform #.(format nil "sk_test_51Jn99bKazowTfVdknr4RjY5oqPKBrUV6B613Wj3afh~
+                             pM76nl9QauaUPsWZo9nzxCalG8S1BUwSPewl9tDd2u28bN00D2DefuQi"))
+   (api-version
+    :accessor api-version
+    :initarg :api-version
+    :initform "2020-08-27")
+   (base-url
+    :accessor base-url
+    :initarg :base-url
+    :initform "https://api.stripe.com")))
 
-(defmacro defapi%get (name (endpoint))
-  `(defapi ,name (,endpoint get-request)))
+(defmethod generate-dex-list append ((processor stripe)
+                                     (request request))
+  `(:basic-auth ,(list (api-key processor))))
 
-(defmacro defapi%delete (name (endpoint))
-  `(defapi ,name (,endpoint delete-request)))
+(defmethod generate-dex-list append ((processor stripe) (request request-with-content))
+  `(:content ,(content request)
+    :headers (("Stripe-Version" . ,(api-version processor))
+              ("Content-Type" . "application/x-www-form-urlencoded"))))
 
-(defgeneric form-dex-args (request)
-  (:method-combination append :most-specific-last))
+(defmethod determine-base-url ((processor stripe) req)
+  (base-url processor))
 
-(defmethod form-dex-args append ((request request))
-  `(:basic-auth ,(list *api-key*) :headers ,(list `("Stripe-Version" . ,*api-version*))))
-
-(defmethod form-dex-args append ((request request-without-content))
-  nil)
-
-(defmethod form-dex-args append ((request request-with-content))
-  (with-slots (content)
-      request 
-    `(:content ,content :headers (("Content-Type" . "application/x-www-form-urlencoded")))))
-
-(defmethod call-api (req)
-  (with-slots (url request-fun)
-      req 
-    (let ((complete-url (generate-url req))
-          (args (form-dex-args req)))
-      (with-captured-api-failure
-        (jojo:parse (apply request-fun complete-url args) :as *parse-as*)))))
-
-(defmethod determine-base-url (req)
-  *url*)
-
-(defmethod determine-base-url ((req post-files-request))
+(defmethod determine-base-url ((processor stripe) (req post-files-request))
   "https://files.stripe.com")
 
-(defmethod generate-url ((req request))
-  (with-accessors ((string-constructor string-constructor))
+(defmethod generate-url ((processor stripe) req)
+  (with-accessors ((string-constructor string-constructor)
+                   (query-constructor query-constructor))
       (class-of req)
-    (format nil "~A~A" (determine-base-url req)
-            (funcall (in-list string-constructor) req))))
+    (concatenate 'string
+                 (determine-base-url processor req)
+                 (funcall string-constructor req))))

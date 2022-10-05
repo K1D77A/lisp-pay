@@ -1,26 +1,19 @@
 (in-package #:lisp-pay/stripe)
 
-(defparameter *api-version* "2020-08-27")
-
-(defparameter *api-key*
-  "sk_test_51Jn99bKazowTfVdknr4RjY5oqPKBrUV6B613Wj3afhpM76nl9QauaUPsWZo9nzxCalG8S1BUwSPewl9tDd2u28bN00D2DefuQi")
-
-(defparameter *url* "https://api.stripe.com")
-
 ;;;core resources
-(defapi%get balance%get-balance ("/v1/balance"))
+(defapi balance%get-balance ("/v1/balance" get-request))
 
-(defapi%get balance_transactions%all ("/v1/balance_transactions"))
+(defapi balance-transactions%all ("/v1/balance_transactions" get-request))
 
-(defapi%get balance_transactions%id ("/v1/balance_transactions/:id"))
+(defapi balance-transactions%id ("/v1/balance_transactions/:id" get-request))
 
 
 
 (defapi charges%create ("/v1/charges" post-request))
 
-(defapi%get charges%all ("/v1/charges"))
+(defapi charges%all ("/v1/charges" get-request))
 
-(defapi%get charges%id ("/v1/charges/:id"))
+(defapi charges%id ("/v1/charges/:id" get-request))
 
 (defapi charges%update ("/v1/charges/:id" post-request))
 
