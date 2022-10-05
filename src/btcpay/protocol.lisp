@@ -35,13 +35,11 @@
 
 (defmethod construct-api-failure-object ((processor btcpay)
                                          response)
-  (with-accessors ((body body))
-      response
-    (let ((code (gethash "code" body))
-          (message (gethash "message" body)))
-      (make-instance 'btcpay-api-failure-obj
-                     :code code
-                     :message message))))
+  (with-hash-keys (|code| |message|)
+      (body response)
+    (make-instance 'btcpay-api-failure-obj
+                   :code |code|
+                   :message |message|)))
 
 
 

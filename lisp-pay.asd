@@ -17,6 +17,7 @@
                #:cl-tls
                #:hunchentoot
                #:closer-mop
+               #:hu.dwim.defclass-star
                #:shasht)
   :serial t
   :pathname "src"
@@ -41,7 +42,6 @@
                (:module "paypal"
                 :components ((:file "package")
                              (:file "conditions")
-                             (:file "helpers")
                              (:file "protocol")
                              (:file "token")
                              (:file "paypal")

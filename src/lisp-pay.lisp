@@ -18,13 +18,14 @@
               (names (mapcar #'first slots))
               (query-slot-names (mapcar #'first query-slots)))
          `(let ((class 
-                  (defclass ,name (,super)
+                  (defclass* ,name (,super)
                     ,(append slots query-slots)
                     ,@(append `((:metaclass ,metaclass)
                                 (:genned-slot-names ,names)
                                 (:query-slot-names ,query-slot-names)
-                                (:endpoint ,endpoint))))))
-            (export ',name)
+                                (:endpoint ,endpoint)))
+                    (:export-class-name-p t)
+                    (:export-accessor-names-p t))))
             (c2mop:ensure-finalized class)
             (let* ((direct-slots (c2mop:class-direct-slots class))
                    (direct-query-slots

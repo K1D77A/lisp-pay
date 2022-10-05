@@ -53,9 +53,9 @@
   (with-accessors ((body body)
                    (status-code status-code))
       response
-    (let ((class (determine-failure-class status-code))
-          (name (gethash "name" body))
-          (message (gethash "message" body)))
-      (make-instance class 
-                     :name name
-                     :message message))))
+    (let ((class (determine-failure-class status-code)))
+      (with-hash-keys (|name| |message|)
+          body 
+        (make-instance class 
+                       :name |name|
+                       :message |message|)))))

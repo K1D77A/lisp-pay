@@ -1,8 +1,5 @@
 (in-package #:lisp-pay/paypal)
 
-(defparameter *testing* t)
-
-
 ;;;tracking
 (defapi tracking%update-or-cancel ("/v1/shipping/trackers/:id" put-request)
         ())

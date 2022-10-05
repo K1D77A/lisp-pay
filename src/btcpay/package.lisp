@@ -1,5 +1,8 @@
 (defpackage #:lisp-pay/btcpay
   (:use #:cl #:lisp-pay)
   (:nicknames #:btcpay)
-  (:export #:*processor*))
+  (:export #:*processor*
+           #:btcpay-api-failure-obj
+           #:code
+           #:message))
 

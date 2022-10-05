@@ -3,6 +3,8 @@
 (defpackage #:lisp-pay
   (:use #:cl)
   (:nicknames #:pay)
+  (:import-from #:hu.dwim.defclass-star
+                #:defclass*)
   (:export #:lisp-pay-condition
            
            ;;lisp-pay

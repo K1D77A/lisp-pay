@@ -140,7 +140,6 @@ This can be specialized for a more advanced response object like those provided 
 (defmethod signal-when-condition (processor c)
   c)
 
-
 (defgeneric construct-api-failure-object (processor api-response)
   (:documentation "Take the API-response condition and post process it into a 
 nicer to read object."))
