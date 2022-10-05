@@ -1,8 +1,5 @@
 (in-package #:lisp-pay/paypal)
 
-(defparameter *parse-as* :plist)
-(defparameter *json-encoder* #'jojo:to-json)
-
 (define-condition paypal-condition (lisp-pay-condition)
   ())
 
@@ -25,7 +22,7 @@
      (format stream "Your token has expired recall 'get-token'. ~A"
              (token obj)))))
 
-(defclass paypal-api-condition (api-failure)
+(defclass paypal-api-failure (api-failure)
   ((status-text
     :accessor status-text
     :initarg :status-text)
@@ -89,13 +86,3 @@
     (429 'four-hundred-twenty-nine)
     (500 'five-hundred)
     (503 'five-hundred-three)))
-
-(defmethod print-object ((obj failed-request) stream)
-  (print-unreadable-object (obj stream :type t :identity t)
-    (print-all-slots obj stream)))
-    
-
-
-
-
-

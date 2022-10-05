@@ -24,6 +24,7 @@
            #:%write-json
            #:%read-json
            #:print-all-slots
+           #:with-hash-keys
 
            ;;protocol
            #:replace-vars-for-slot-names

@@ -4,8 +4,6 @@
   (:use #:cl #:lisp-pay)
   (:nicknames #:ldp #:paypal)
   (:export #:paypal-condition
-           #:*parse-as*
-           #:*json-encoder*
            #:token-issue
            #:missing-token
            
@@ -14,99 +12,26 @@
            #:expired-token
            #:token
 
-           #:paypal-api-condition
-           #:body
-           #:status-code
+           #:paypal-api-class
+           #:message
+           #:name
            #:status-text
-
            #:failed-request
-
            #:authorization-error
-
            #:server-error
-
            #:four-hundred
-
            #:four-hundred-one
-
            #:four-hundred-three
-
            #:four-hundred-four
-
            #:four-hundred-five
-
            #:four-hundred-six
-
            #:four-hundred-fifteen
-
            #:four-hundred-twenty-two
-
            #:four-hundred-twenty-nine
-
            #:five-hundred
-
            #:five-hundred-three
 
-           ;;protocol
-           #:call-api
-           
-           #:request
-           #:content-type
-           #:request-fun
-           
-           #:request-without-content
-
-           #:get-r
-
-           #:query-req
-
-           #:get-r-query
-
-           #:delete-r
-
-           #:request-with-content
-
-           #:patch-r
-
-           #:post-r
-
-           #:query-req-content
-
-           #:post-query-r
-
-           #:post-files-r
-
-           #:put-r
-
-           #:put-query-r
-
-           #:defapi
-
            #:*request-headers*
-
-           ;;response
-           #:response
-           #:body
-           #:status-code
-           #:status-string
-
-           #:good-response
-
-           #:two-hundred
-
-           #:two-hundred-one
-
-           #:two-hundred-two
-
-           #:two-hundred-four
-
-           ;;token
-           #:*token*
-
-           #:*client*
-
-           #:*secret*
-
            #:token
            #:nonce
            #:expires-in
@@ -117,7 +42,7 @@
 
            #:get-token
            
-           ;;latter-day-paypal
+           ;;paypal
            #:*testing*
 
            #:tracking%update-or-cancel
