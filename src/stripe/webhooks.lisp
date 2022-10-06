@@ -52,4 +52,4 @@ valid (bool) and the difference between TIMESTAMP and #'local-time:now (unix epo
 (defmethod no-applicable-method ((fun (eql #'verify-webhook)) &rest args)
   (declare (ignore args))
   (error "No default implementation for anything other than 
-lack.request:request."))
+lack.request:"))

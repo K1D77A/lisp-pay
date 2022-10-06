@@ -15,6 +15,9 @@
     :initarg :base-url
     :initform "https://api.stripe.com")))
 
+(defparameter *processor*
+  (make-instance 'stripe))
+
 (defmethod generate-dex-list append ((processor stripe)
                                      (request request))
   `(:basic-auth ,(list (api-key processor))))
@@ -37,3 +40,17 @@
     (concatenate 'string
                  (determine-base-url processor req)
                  (funcall string-constructor req))))
+
+(defmethod construct-api-failure-object ((processor stripe)
+                                         response)
+  (with-hash-keys (|error| |type|)
+      (gethash "type" (body response))
+    (let ((obj (make-instance (%determine-error-class type)
+                              :message message
+                              :parent-condition condition)))
+      (maphash (lambda (key val)
+                 (let ((slot-name (%error-key->slot-name parse-as key)))
+                   (when slot-name
+                     (setf (slot-value obj slot-name) val))))
+               parsed)
+      obj)))

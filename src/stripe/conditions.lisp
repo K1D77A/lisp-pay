@@ -89,22 +89,6 @@
             ("source" . source))))
     (cdr (assoc key alist :test #'string=))))
 
-(defmethod construct-api-failure-object ((processor stripe)
-                                         response)
-  (with-hash-keys (|error| |type|)
-      (gethash "type" (body response))
-    (let ((obj (make-instance (%determine-error-class type)
-                              :message message
-                              :parent-condition condition)))
-      (maphash (lambda (key val)
-                 (let ((slot-name (%error-key->slot-name parse-as key)))
-                   (when slot-name
-                     (setf (slot-value obj slot-name) val))))
-               parsed)
-      obj)))
-
-
-
 
 
 

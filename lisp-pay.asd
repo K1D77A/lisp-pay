@@ -32,13 +32,13 @@
                 :components ((:file "package")
                              (:file "protocol")
                              (:file "btcpay")))
-               ;; (:module "stripe"
-               ;;  :components ((:file "package")
-               ;;               (:file "conditions")
-               ;;               (:file "helpers")
-               ;;               (:file "protocol")
-               ;;               (:file "stripe")
-               ;;               (:file "webhooks")))
+               (:module "stripe"
+                :components ((:file "package")
+                             (:file "conditions")
+                             (:file "helpers")
+                             (:file "protocol")
+                             (:file "stripe")
+                             (:file "webhooks")))
                (:module "paypal"
                 :components ((:file "package")
                              (:file "conditions")

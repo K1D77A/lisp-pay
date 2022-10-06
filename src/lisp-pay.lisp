@@ -25,8 +25,7 @@
                                 (:query-slot-names ,query-slot-names)
                                 (:endpoint ,endpoint)))
                     (:export-class-name-p t)
-                    (:export-accessor-names-p t)
-                    (:export-predicate-name nil))))
+                    (:export-accessor-names-p t))))
             (c2mop:ensure-finalized class)
             (let* ((direct-slots (c2mop:class-direct-slots class))
                    (direct-query-slots
