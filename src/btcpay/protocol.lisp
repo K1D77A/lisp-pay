@@ -28,11 +28,6 @@
     :accessor message
     :initarg :message)))
 
-(defmethod print-object ((obj btcpay-api-failure-obj) stream)
-  (print-unreadable-object (obj stream :type t :identity t)
-    (format stream "~%")
-    (print-all-slots obj stream)))
-
 (defmethod construct-api-failure-object ((processor btcpay)
                                          response)
   (with-hash-keys (|code| |message|)
@@ -40,8 +35,3 @@
     (make-instance 'btcpay-api-failure-obj
                    :code |code|
                    :message |message|)))
-
-
-
-
-

@@ -1,5 +1,11 @@
 (in-package #:lisp-pay)
 
+
+#||
+This file contains the code for a Metaclass used to create the request objects for each
+payment processor.
+||#
+
 (defclass lisp-pay-api-call (c2mop:funcallable-standard-class)
   ((string-constructor
     :accessor string-constructor
@@ -118,4 +124,10 @@ of the slot name when encoding in the Query string.")))
   (:documentation "Top level response class"))
 
 (defclass api-failure ()
-  ())
+  ()
+  (:documentation "API Failure superclass."))
+
+(defmethod print-object ((obj api-failure) stream)
+  (print-unreadable-object (obj stream :type t :identity t)
+    (format stream "~%")
+    (print-all-slots obj stream)))
