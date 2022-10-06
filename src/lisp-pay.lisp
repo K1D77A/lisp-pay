@@ -2,10 +2,14 @@
 
 (in-package #:lisp-pay)
 
-
 (defparameter *processor* (make-instance 'processor))
 
 (defmacro defprocessor (name metaclass direct-slots &rest options)
+  "Defines a class by NAME which is a subclass of processor 
+and the initform for the slot api-metaclass is METACLASS. DIRECT-SLOTS being 
+the class direct slots. Defines a new macro for that package called defapi. 
+Where the key value metaclass is bound to METACLASS. Defapi is used to define new 
+api calls."
   `(progn
      (defclass ,name (processor)
        ,(append direct-slots

@@ -14,13 +14,16 @@ each package.
 Everything is automatically parsed as a hash-table using Shasht.
 
 This default behaviour can be changed by specializing the Generic function 
-#'%read-json 
-in src/helpers.lisp
-
+```lisp
+(defmethod %read-json (processor stream-or-string)
+  (shasht:read-json stream-or-string))
+```
 Writing is done using Shasht: 
-#'%write-json 
+```lisp
 (defmethod %write-json (processor obj &optional stream)
   (shasht:write-json obj stream))
+```
+These are in src/helpers.lisp
 
 
 

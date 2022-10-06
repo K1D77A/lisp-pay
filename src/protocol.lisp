@@ -14,6 +14,7 @@ Many helpers for defining MOP protocols for API wrappers.
   ())
 
 (defun replace-vars-for-slot-names (split slots)
+  "Takes in a split list split by #\/ (url) produces a list of slot names"
   (mapcar (lambda (str)
             (let ((found?
                     (find (subseq str 1) slots :test #'string-equal)))
@@ -23,6 +24,8 @@ Many helpers for defining MOP protocols for API wrappers.
           split))
 
 (defun gen-url-generator (class)
+  "Compiles a function for CLASS that when called with the request object. When evaluated
+the function returns a string with specific slots values written into a string."
   (with-accessors ((endpoint endpoint)
                    (genned-slot-names genned-slot-names))
       class 
@@ -44,6 +47,9 @@ Many helpers for defining MOP protocols for API wrappers.
             (in-list endpoint))))))
 
 (defun gen-query-generator (query-slots query-slot-names)
+  "Given QUERY-SLOTS and QUERY-SLOT-NAMES compiles a function that when evaluated 
+with a request will step through the query slots and concatenate the query slot names and
+values into a string. Uses #'encode-query-slot to encode the query params."
   (if query-slots 
       (compile nil
                `(lambda (request)
@@ -61,7 +67,9 @@ Many helpers for defining MOP protocols for API wrappers.
         (declare (ignore req))
         "")))
 
-(defgeneric encode-query-slot (request slot slot-name))
+(defgeneric encode-query-slot (request slot slot-name)
+  (:documentation "Based on REQUEST SLOT and SLOT-NAME encode the slot in a HTTP Query 
+param format Uses #'encode-query-value for value encoding."))
 
 (defmethod encode-query-slot (request slot slot-name)
   (format nil "~A=~A"
@@ -70,7 +78,9 @@ Many helpers for defining MOP protocols for API wrappers.
               (string-downcase (symbol-name slot-name)))
           (encode-query-value slot (slot-value request slot-name))))
 
-(defgeneric encode-query-value (slot value))
+(defgeneric encode-query-value (slot value)
+  (:documentation "Given a SLOT and a VALUE encodes the value correctly for a HTTP 
+Query param. Encode differently based on the type of the Value."))
 
 (defmethod encode-query-value (slot (value string))
   (quri:url-encode value))
@@ -85,6 +95,7 @@ Many helpers for defining MOP protocols for API wrappers.
   "true")
 
 (defmethod encode-query-value (slot (value sequence))
+  "When a VALUE is sequence, then we will encode it like a query param array."
   (let ((name (string-downcase (c2mop:slot-definition-name slot))))
     (format nil "~{~A~^&~}" 
             (map 'list
@@ -93,6 +104,8 @@ Many helpers for defining MOP protocols for API wrappers.
                  value))))
 
 (defun slots-from-url (url)
+  "Given a URL splits the strings out by #\: and then generates a list of plists 
+used for creating slots in a class."
   (let* ((split (str:split #\/ url :omit-nulls t))
          (slots (remove-if-not (lambda (ele) (char= #\: (aref ele 0))) split)))
     (mapcar (lambda (slot)
@@ -103,9 +116,11 @@ Many helpers for defining MOP protocols for API wrappers.
                 (list intern :accessor intern :initarg key)))
             slots)))
 
-(defgeneric generate-url (processor request))
+(defgeneric generate-url (processor request)
+  (:documentation "Generate a request URL that is passed to Dex."))
 
 (defmethod generate-url (processor req)
+  "Default URL generator."
   (with-accessors ((string-constructor string-constructor)
                    (query-constructor query-constructor))
       (class-of req)
@@ -116,7 +131,9 @@ Many helpers for defining MOP protocols for API wrappers.
                    (funcall query-constructor req)))))
 
 (defgeneric generate-dex-list (processor request)
-  (:method-combination append :most-specific-last))
+  (:method-combination append :most-specific-last)
+  (:documentation "Generate a list passed to dex using #'apply. Specialized by each 
+payment processor."))
 
 (defgeneric call-api (request)
   (:documentation "Generic means of making per processor requests."))

@@ -117,7 +117,13 @@ This can be specialized for a more advanced response object like those provided 
 
 (defmethod construct-initargs-for-response append ((processor processor)
                                                    status body response)
-  (list :status-code status :body (read-json body) :dex-response response))
+  (list :status-code status
+        :body (read-json body)
+        :dex-response response))
+
+(defgeneric construct-response-from-api (processor response)
+  (:documentation "Means of taking a response from a dex call and converting it into 
+something generic."))
 
 (defmethod construct-response-from-api (processor response)
   (let ((status (dex-response-status-code response))
@@ -129,22 +135,17 @@ This can be specialized for a more advanced response object like those provided 
        (apply fun class
               (construct-initargs-for-response processor status body response))))))
 
-(defgeneric signal-when-condition (processor c))
-
-(defmethod signal-when-condition :before (processor (c condition))
-  (setf (api-failure c) (construct-api-failure-object processor c)))
-
-(defmethod signal-when-condition (processor (c condition))
-  (error c))
-
-(defmethod signal-when-condition (processor c)
-  c)
+(defgeneric signal-when-condition (processor c)
+  (:method :before (processor (c condition))
+    (setf (api-failure c) (construct-api-failure-object processor c)))
+  (:method (processor (c condition))
+    (error c))
+  (:method (processor c)
+    c))
 
 (defgeneric construct-api-failure-object (processor api-response)
   (:documentation "Take the API-response condition and post process it into a 
-nicer to read object."))
-
-(defmethod construct-api-failure-object (processor api-response)
-  nil)
-
+nicer to read object.")
+  (:method (processor api-response)
+    nil))
 
