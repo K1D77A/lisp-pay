@@ -25,53 +25,85 @@ Writing is done using Shasht:
 ```
 These are in src/helpers.lisp
 
+## How it works
 
-
-
-# Paypal 
-
-### Dependencies
-
-### Intro
-
-To get started you need to set `*client*` and `*secret*` to your client and secret. 
-Then call `get-token`. They are currently set to my old client and secret.
-
+Every processor has the exported symbol \*processor\* which is bound to an instance 
+of a subclass of `processor`. Paypal, Stripe, and BTCPay all have their own versions,
+so you can either 
 ```lisp
-LDP> *client*
-"ATiiZbWBH3_qd_y3P3AZQiQlBIh9mVTDSTtr4ALOPqfTd5eBZooqeJlLT0o6-HLF95_Vj2GADaIhp5Ee"
-LDP> *secret*
-"EMBuo5-J3kWfSEJYY5mtQd8Hm9JezbxjkUUJ2D9JwKwwas1E05Ejp4A1wlpNuuFd3YyIoKZrSxjs9OUb"
-LDP> (get-token)
-#<TWO-HUNDRED {100A51E5C3}>
-#<TOKEN {100A456B93}>
-LDP> 
+(setf stripe:*processor* (make-instance 'stripe:stripe \<initargs\>))
 ```
-This sets the value of `*token*`. 
+And then your version with your keys will be used when evaluating `call-api`
+
+### Stripe
+
+- api-key 
+- api-version (This should remain as default)
+- base-url 
+
+### Paypal 
+- base-url (This should remain as default unless using sandbox)
+- secret 
+- token (bound with #'get-token \<processor\>)
+- secret 
+- client 
+
+### BTCPay
+- api-key
+- base-url
+
+
+## Conditions
+
+All conditions are a subclass of `api-response-condition` 
+Each payment processor has a specific `api-failure` object which is a subclass of 
+`api-failure` these are just a nicely version of the response body. You can use this 
+to dispatch.
+
+## General notes
+
+### Query parameters
+
+Query parameters are slots within the object, just set them and the ones that are bound will be encoded and added onto the end of the URL.
+
+### Path parameters
+
+Path parameters are slots within the request object, just set the slots and they will be automatically encoded into the URL.
+
+
+## Paypal 
+
+To get started create your own version of the paypal processor object and then bind 
+paypal:\*processor\* to this. 
+
+Then call `(get-token <my-processor>)`.
+
 Now you have your token you can make requests. 
 ```lisp
 LDP> (make-instance 'products%list)
-#<PRODUCTS%LIST {100BBA0F7B}>
+#<PRODUCTS%LIST 
+REQUEST-FUN: GET
+CONTENT-TYPE: application/json
+ {100C63FE0B}>
 LDP> (call-api *)
-#<TWO-HUNDRED {100BD2E673}>
-LDP> (body *)
-(:|links|
- ((:|method| "GET" :|rel| "self" :|href|
-   "https://api.sandbox.paypal.com/v1/catalogs/products?page_size=10&page=1"))
- :|products| NIL)
+; Debugger entered on #<UNBOUND-SLOT TOKEN {100CEAF943}>
+[1] LDP> 
+#<SUCCESSFUL-RESPONSE 
+STATUS-CODE: 200
+BODY: #<HASH-TABLE :TEST EQUAL :COUNT 2 {100F4B1423}>
+DEX-RESPONSE: #S(DEX-RESPONSE
+                 :BODY {"products":[{"id":"PROD-301675791L907343Y","name":"name","create_time":"2022-02-24T08:10:22Z","links":[{"href":"https://api.sandbox.paypal.com/v1/catalogs/products/PROD-301675791L907343Y","rel":"self","method":"GET"}]},{"id":"PROD-55L8435121622000F","name":"name","create_time":"2022-02-24T08:11:21Z","links":[{"href":"https://api.sandbox.paypal.com/v1/catalogs/products/PROD-55L8435121622000F","rel":"self","method":"GET"}]}],"links":[{"href":"https://api.sandbox.paypal.com/v1/catalogs/products?page_size=10&page=1","rel":"self","method":"GET"}]}
+                 :STATUS-CODE 200
+                 :HEADERS #<HASH-TABLE :TEST EQUAL :COUNT 16 {100F4A7CF3}>
+                 :QURI https://api-m.sandbox.paypal.com/v1/catalogs/products)
+ {100F4B4DB3}>
 LDP> 
 ```
-The result is wrapped in an object with its status code and text and a body slot that 
-contains the result. The same is true if it returns an error.
-The json is decoded using jonathan.
+
 
 ### Token issues
 If you have failed to set token or it has expired
 ```lisp
-LDP> (setf *token* nil)
-NIL
-LDP> (make-instance 'products%list)
-#<PRODUCTS%LIST {100BD37F5B}>
 LDP> (call-api *)
 ; Debugger entered on #<UNBOUND-TOKEN {100BD3E133}>
 
@@ -91,25 +123,9 @@ LDP> (handler-bind ((token-issue (lambda (c)
        (call-api *))
 #<TWO-HUNDRED {1003A50663}>
 LDP> (body *)
-(:|links|
- ((:|method| "GET" :|rel| "self" :|href|
-   "https://api.sandbox.paypal.com/v1/catalogs/products?page_size=10&page=1"))
- :|products| NIL)
+<hash table>
 LDP> 
 ```
-
-### Errors
-All conditions are subclasses of `paypal-api-condition` see conditions.lisp
-```lisp
-LDP> (handler-case (call-api *)
-       (condition (c)
-         c))
-#<FOUR-HUNDRED-FOUR Status: 404.
-Status Text: Not Found.
-Body: NIL {10040F0083}>
-LDP> 
-```
-
 ### Adding headers
 
 Some calls accept other headers like Paypal-Request-Id to add these headers to a request lexically bind the variable `*request-headers*`
@@ -124,72 +140,34 @@ LDP> (let ((*request-headers* '(("Paypal-Auth-Assertion" . "imauthassertion"))))
 Headers are sent using Dex so they have to be a properly formed alist like above.
 You can see the additional headers in the paypal dev docs.
 
-### Testing 
-By default the API URL used is the sandbox url, to go live set `*testing*` to non nil.
-```lisp
-LDP> *testing*
-T
-```
 
-### Encoding
-
-All encoding is done with cl-json. So the easiest way to create JSON objects is to use 
-a hash-table. There is a helper function called `%quick-hash` to generate a hash-table from an alist
-```lisp
-LDP> (cl-json:encode-json-to-string (%quick-hash '(("abc" . "def"))))
-"{\"abc\":\"def\"}"
-LDP> 
-```
-Patch requests take an array:
-
-```lisp
-LDP> (make-array 1 :initial-element (%quick-hash '(("abc" . "def"))))
-#(#<HASH-TABLE :TEST EQL :COUNT 1 {100BED8343}>)
-LDP> (cl-json:encode-json-to-string *)
-"[{\"abc\":\"def\"}]"
-LDP> 
-```
-
-### Patch requests
-
-A lot of the requests that update are patch requests which accept objects. When you are using make-instance you will see a slot called 'patch-request, put your request data in this.
-
-### Requests that have a json body
-
-Most requests (put/post) have a body, to provide this data use the :content slot. 
-
-### Query parameters
-
-Query parameters are slots within the object, just set them and the ones that are bound will be encoded and added onto the end of the URL.
-
-### Path parameters
-
-Path parameters are slots within the request object, just set the slots and they will be automatically encoded into the URL.
 
 ## Webhook verification
-To verify the signature of a paypal request there are two methods you can use. 
-`(ldp:verify-webhook )` this takes `algo cert-url transmission-signature transmission-id timestamp webhook-id raw-body` algo is a keyword generated with `%algo->key` its simply the string converted to a keyword.
-Or you can use 
-`(ldp:verify-paypal-webhook)` which takes `webhook-id request raw-body` this is a method that will dispatch on REQUEST, and currently only works with a hunchentoot request object like so: 
-```lisp
-(hunchentoot:define-easy-handler (paypal-payment-processor
-                                  :uri <your webhook url>
-                                  :default-request-type :POST)
-    ()
-  (let* ((raw-data (tbnl:raw-post-data :force-binary t)))
-    (if (ldp:verify-paypal-webhook (if *testing*
-                                       "your testing webhook id"
-                                       "Your live webhook id")
-                                   tbnl:*request* raw-data)
-        (let ((plist (jojo:parse (babel:octets-to-string raw-data))))
-          (setf (tbnl:return-code*) 200)
-          <your processing method> 
-          "t")
-        (progn (setf (tbnl:return-code*) 400)
-               "nil"))))
-```
-If you are using a server that is not Hunchentoot then you can just extract the header values and pass them to `(ldp:verify-webhook)`, this is all the method `ldp:verify-paypal-webhook` is doing under the hood. 
+To verify the signature of a paypal request you can use 
+`(ldp:verify-paypal-webhook)` 
+which takes `webhook-id request raw-body`
+The webhook-id is returned when you create a webhook.
 
+Here is an example of how I use it in practice: 
+```lisp
+
+(defmethod handle-webhook (client processor request)
+  "Handles a webhook REQUEST properly by validating it for each processor, 
+then constructing an internal representation of the hook, preprocessing it and then 
+responding to it."
+  (destructuring-bind (&key validp raw &allow-other-keys)
+      (validate-received-webhook client processor request)
+    (if (and validp raw)
+        ....)))
+
+(defmethod validate-received-webhook (client (processor paypal) req)
+  (let ((raw (de:ningle-raw-body req)))
+    (list :validp (ldp:verify-paypal-webhook (webhook-id processor) req raw)
+          :raw raw)))
+          
+```
+
+There are methods for `lack.request` and a `tbnl:request`
 
 
 # Stripe

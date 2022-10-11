@@ -41,24 +41,6 @@
       (first obj)
       obj))
 
-(c2mop:define-method-combination string-gen (&optional (order ':most-specific-last))
-  ((around (:around))
-   (primary (string-gen)))
-  (case order
-    (:most-specific-first)
-    (:most-specific-last (setq primary (reverse primary))))
-  (let ((form (if (rest primary)
-                  `(concatenate 'string ,@(mapcar #'(lambda (method)
-                                                      `(call-method ,method))
-                                                  primary))
-                  `(call-method ,(first primary)))))
-
-    (if around
-        `(call-method ,(first around)
-                      (,@(rest around))
-                      (make-method ,form))
-        form)))
-
 (defgeneric write-json (obj &optional stream)
   (:documentation "Write JSON"))
 

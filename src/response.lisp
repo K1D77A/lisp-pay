@@ -5,29 +5,34 @@
 This file contains code contains a generic wrapper over responses from the various
 APIs
 ||#
-(defmethod response-status ((response list))
-  (second response))
 
-(defmethod response-status ((response dex:http-request-failed))
-  (dexador:response-status response))
+(defgeneric response-status (response)
+  (:documentation "Generic means of getting the response-status.")
+  (:method ((response list))
+    (second response))
+  (:method ((response dex:http-request-failed))
+    (dex:response-status response)))
 
-(defmethod response-body ((response list))
-  (first response))
+(defgeneric response-body (response)
+  (:documentation "Generic means of getting the response body.")
+  (:method ((response list))
+    (first response))
+  (:method ((response dex:http-request-failed))
+    (dex:response-body response)))
 
-(defmethod response-body ((response dex:http-request-failed))
-  (dexador:response-body response))
+(defgeneric response-headers (response)
+  (:documentation "Generic means of getting the response headers.")
+  (:method ((response list))
+    (third response))
+  (:method ((response dex:http-request-failed))
+    (dex:response-headers response)))
 
-(defmethod response-headers ((response dex:http-request-failed))
-  (dexador:response-headers response))
-
-(defmethod response-headers ((response list))
-  (third response))
-
-(defmethod response-quri ((response dex:http-request-failed))
-  (dexador:request-uri response))
-
-(defmethod response-quri ((response list))
-  (fourth response))
+(defgeneric response-quri (response)
+  (:documentation "Generic means of getting the response quri.")
+  (:method ((response list))
+    (fourth response))
+  (:method ((response dex:http-request-failed))
+    (dex:request-uri response)))
 
 (defstruct dex-response
   (body)
@@ -44,13 +49,16 @@ APIs
 (define-condition api-response-condition (lisp-pay-condition)
   ((status-code
     :accessor status-code
-    :initarg :status-code)
+    :initarg :status-code
+    :documentation "HTTP Status code")
    (body
     :accessor body
-    :initarg :body)
+    :initarg :body
+    :documentation "The body of the HTTP request.")
    (dex-response
     :accessor dex-response
-    :initarg :dex-response)
+    :initarg :dex-response
+    :documentation "The dex response object")
    (api-failure
     :accessor api-failure
     :initarg :api-failure
@@ -60,7 +68,6 @@ APIs
 (defmethod print-object ((obj api-response-condition) stream)
   (print-unreadable-object (obj stream :type t :identity t)
     (print-all-slots obj stream)))
-
 
 (define-condition client-error-response (api-response-condition)
   ())
@@ -74,13 +81,16 @@ APIs
 (defclass api-response-class ()
   ((status-code
     :accessor status-code
-    :initarg :status-code)
+    :initarg :status-code
+    :documentation "HTTP status code.")
    (body
     :accessor body
-    :initarg :body)
+    :initarg :body
+    :documentation "HTTP request body.")
    (dex-response
     :accessor dex-response
-    :initarg :dex-response)))
+    :initarg :dex-response
+    :documentation "The Dex response.")))
 
 (defmethod print-object ((obj api-response-class) stream)
   (print-unreadable-object (obj stream :type t :identity t)
@@ -94,6 +104,11 @@ APIs
 
 (defclass redirection-response (api-response-class)
   ())
+
+(defgeneric determine-response (processor response)
+  (:documentation "Generic means of determining what class we want our RESPONSE to
+be. RESPONSE is an instance of dex-response. Must evaluate to the constructor
+function ie #'make-instance/#'make-condition and a class."))
 
 (defmethod determine-response (processor response)
   (let ((n (dex-response-status-code response)))
@@ -119,7 +134,8 @@ This can be specialized for a more advanced response object like those provided 
                                                    status body response)
   (list :status-code status
         :body (read-json body)
-        :dex-response response))
+        :dex-response response
+        :processor processor))
 
 (defgeneric construct-response-from-api (processor response)
   (:documentation "Means of taking a response from a dex call and converting it into 
@@ -136,6 +152,7 @@ something generic."))
               (construct-initargs-for-response processor status body response))))))
 
 (defgeneric signal-when-condition (processor c)
+  (:documentation "Signals a condition when C is a condition.")
   (:method :before (processor (c condition))
     (setf (api-failure c) (construct-api-failure-object processor c)))
   (:method (processor (c condition))
@@ -145,7 +162,7 @@ something generic."))
 
 (defgeneric construct-api-failure-object (processor api-response)
   (:documentation "Take the API-response condition and post process it into a 
-nicer to read object.")
+nicer to read object. Specialize in order to construct processor specific failure objects")
   (:method (processor api-response)
     nil))
 
