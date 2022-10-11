@@ -2,8 +2,10 @@
 
 (defpackage #:lisp-pay/paypal
   (:use #:cl #:lisp-pay)
-  (:nicknames #:ldp #:paypal)
-  (:export #:paypal-condition
+  (:nicknames #:paypal)
+  (:export #:*processor*
+
+           #:paypal-condition
            #:token-issue
            #:missing-token
            

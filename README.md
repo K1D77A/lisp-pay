@@ -50,10 +50,9 @@ basis.
 
 ### Paypal 
 - base-url (This should remain as default unless using sandbox)
-- secret 
+- secret-id
 - token (bound with #'get-token \<processor\>)
-- secret 
-- client 
+- client-id 
 
 ### BTCPay
 - api-key

@@ -11,11 +11,13 @@ the class direct slots. Defines a new macro for that package called defapi.
 Where the key value metaclass is bound to METACLASS. Defapi is used to define new 
 api calls."
   `(progn
-     (defclass ,name (processor)
+     (defclass* ,name (processor)
        ,(append direct-slots
          `((api-metaclass
             :initform ',metaclass)))
-       ,@options)
+       ,@(append options
+                 '((:export-class-name-p t)
+                  (:export-accessor-names-p t))))
      (defmacro defapi (name (endpoint super &key (metaclass ',metaclass))
                        &optional query-slots)
        (let* ((slots (slots-from-url endpoint))

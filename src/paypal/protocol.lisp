@@ -7,21 +7,22 @@
     :accessor token 
     :initarg :token
     :type token)
-   (secret
-    :accessor secret
-    :initarg :secret
+   (secret-id 
+    :accessor secret-id 
+    :initarg :secret-id 
     :initform
     "EMBuo5-J3kWfSEJYY5mtQd8Hm9JezbxjkUUJ2D9JwKwwas1E05Ejp4A1wlpNuuFd3YyIoKZrSxjs9OUb"
     :type string)
-   (client
-    :accessor client
-    :initarg :client
+   (client-id 
+    :accessor client-id 
+    :initarg :client-id
     :initform
     "ATiiZbWBH3_qd_y3P3AZQiQlBIh9mVTDSTtr4ALOPqfTd5eBZooqeJlLT0o6-HLF95_Vj2GADaIhp5Ee")))
 
-(defclass paypal-testing (paypal)
+(class*:defclass* paypal-testing (paypal)
   ((base-url
-    :initform "https://api-m.sandbox.paypal.com")))
+    :initform "https://api-m.sandbox.paypal.com"))
+  (:export-class-name-p t))
 
 (defvar *processor*
   (make-instance 'paypal-testing))
