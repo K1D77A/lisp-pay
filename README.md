@@ -18,22 +18,29 @@ This default behaviour can be changed by specializing the Generic function
 (defmethod %read-json (processor stream-or-string)
   (shasht:read-json stream-or-string))
 ```
+But if you do that something will probably break so you will have to fix that yourself.
+
 Writing is done using Shasht: 
 ```lisp
 (defmethod %write-json (processor obj &optional stream)
   (shasht:write-json obj stream))
 ```
-These are in src/helpers.lisp
+These are in `src/helpers.lisp`
 
 ## How it works
 
-Every processor has the exported symbol \*processor\* which is bound to an instance 
+Every processor has the exported symbol `*processor*` which is bound to an instance 
 of a subclass of `processor`. Paypal, Stripe, and BTCPay all have their own versions,
-so you can either 
+so you can set 
 ```lisp
 (setf stripe:*processor* (make-instance 'stripe:stripe \<initargs\>))
 ```
 And then your version with your keys will be used when evaluating `call-api`
+
+## TODO
+
+Easy macro for lexically binding the value of `<package>:*processor*` on a per use
+basis. 
 
 ### Stripe
 
@@ -80,14 +87,14 @@ Then call `(get-token <my-processor>)`.
 
 Now you have your token you can make requests. 
 ```lisp
-LDP> (make-instance 'products%list)
+PAYPAL> (make-instance 'products%list)
 #<PRODUCTS%LIST 
 REQUEST-FUN: GET
 CONTENT-TYPE: application/json
  {100C63FE0B}>
-LDP> (call-api *)
+PAYPAL> (call-api *)
 ; Debugger entered on #<UNBOUND-SLOT TOKEN {100CEAF943}>
-[1] LDP> 
+[1] PAYPAL> 
 #<SUCCESSFUL-RESPONSE 
 STATUS-CODE: 200
 BODY: #<HASH-TABLE :TEST EQUAL :COUNT 2 {100F4B1423}>
@@ -97,14 +104,14 @@ DEX-RESPONSE: #S(DEX-RESPONSE
                  :HEADERS #<HASH-TABLE :TEST EQUAL :COUNT 16 {100F4A7CF3}>
                  :QURI https://api-m.sandbox.paypal.com/v1/catalogs/products)
  {100F4B4DB3}>
-LDP> 
+PAYPAL> 
 ```
 
 
 ### Token issues
 If you have failed to set token or it has expired
 ```lisp
-LDP> (call-api *)
+PAYPAL> (call-api *)
 ; Debugger entered on #<UNBOUND-TOKEN {100BD3E133}>
 
 You have not evaluated 'get-token'.
@@ -117,14 +124,14 @@ All requests made with `call-api` have the restart `missing-token` just in case 
 
 ```lisp
 #<PRODUCTS%LIST {100BD37F5B}>
-LDP> (handler-bind ((token-issue (lambda (c)
+PAYPAL> (handler-bind ((token-issue (lambda (c)
                                    (declare (ignore c))
                                    (invoke-restart 'missing-token))))
        (call-api *))
 #<TWO-HUNDRED {1003A50663}>
-LDP> (body *)
+PAYPAL> (body *)
 <hash table>
-LDP> 
+PAYPAL> 
 ```
 ### Adding headers
 
@@ -132,7 +139,7 @@ Some calls accept other headers like Paypal-Request-Id to add these headers to a
 
 ```lisp
 #<PRODUCTS%LIST {101130BC0B}>
-LDP> (let ((*request-headers* '(("Paypal-Auth-Assertion" . "imauthassertion"))))
+PAYPAL> (let ((*request-headers* '(("Paypal-Auth-Assertion" . "imauthassertion"))))
        (declare (special *request-headers*))
        <request> 
        <call-api>)
@@ -144,7 +151,7 @@ You can see the additional headers in the paypal dev docs.
 
 ## Webhook verification
 To verify the signature of a paypal request you can use 
-`(ldp:verify-paypal-webhook)` 
+`(paypal:verify-paypal-webhook)` 
 which takes `webhook-id request raw-body`
 The webhook-id is returned when you create a webhook.
 
@@ -162,10 +169,11 @@ responding to it."
 
 (defmethod validate-received-webhook (client (processor paypal) req)
   (let ((raw (de:ningle-raw-body req)))
-    (list :validp (ldp:verify-paypal-webhook (webhook-id processor) req raw)
+    (list :validp (paypal:verify-paypal-webhook (webhook-id processor) req raw)
           :raw raw)))
           
 ```
+(please note that PROCESSOR above is not the same as the definition within this library)
 
 There are methods for `lack.request` and a `tbnl:request`
 
@@ -180,8 +188,7 @@ Currently have wrapped the section Core Resources and under Products the product
 To change the default parser from jojo's plist to a hash-table change `*parse-as*` to 
 a valid (jojo:parse <content> :as <key>), I suggest :hash-table
 
-
-First you have to set `*api-key*` to your api key from stripe, you can do this lexically ofcourse. Best run a few tests, so use your test keys first.
+First set the value of `stripe:*processor* to your instance of the stripe processor.
 
 Then you simply do the following:
 
@@ -221,20 +228,20 @@ STRIPE> (call-api *)
 ```
 
 ```lisp
-SATMW> (make-instance 'events%id :id "abc")
+STRIPE> (make-instance 'events%id :id "abc")
 #<EVENTS%ID {100F182A7B}>
-SATMW> (call-api *)
+STRIPE> (call-api *)
 <invalid-request-error because no known id>
 ```
 If you have a post request that requires values then these requests have a slot called `content` that you fill with an ALIST.
 ```lisp
-SATMW> (make-instance 'charges%create :content '(("amount" . 100)("currency" . "gbp")("source" . "abc")))
+STRIPE> (make-instance 'charges%create :content '(("amount" . 100)("currency" . "gbp")("source" . "abc")))
 #<CHARGES%CREATE {100F4CF67B}>
 ```
 Dexador is used to send the requests so it must be a properly formed ALIST.
 
 ### Alist construct
-In `src/helpers.lisp` I have built a very simple DSL which will parse into an alist, you can pass the result of evaluating this as the :content key to dex:post. 
+In `src/stripe/helpers.lisp` I have built a very simple DSL which will parse into an alist, you can pass the result of evaluating this as the :content key to dex:post. 
 ```lisp
 (defparameter *test* 
   '(("fur" . "fluffy")
@@ -298,6 +305,7 @@ STRIPE> (ec *test2*)
  ("fur" . "fluffy") ("colour" . "brown"))
 ```
 `ec` now also accepts hash-tables and will attempt to convert them into the correctly encoded format for Stripe. You can even combine lists written in the basic DSL I wrote with hash-tables to produce one large alist to pass to Stripe.
+
 ## Webhooks
 
 To verify the webhooks from Stripe you need to follow the instructions here:
@@ -327,7 +335,7 @@ responding to it."
     (declare (ignore time-dif))
     (list :validp valid-hook-p :raw raw))
 ```
-
+(please note that PROCESSOR above is not the same as the definition within this library)
 
 # BTCPay
 
