@@ -13,25 +13,19 @@
 (defmethod raw-body ((request tbnl:request))
   (tbnl:raw-post-data :force-binary t))
 
-
 (defgeneric to-array (ele)
-  (:documentation "Convert ELE to an array"))
-
-(defmethod to-array ((str string))
-  (babel:string-to-octets))
-
-(defmethod to-array ((str array))
-  str)
-
+  (:documentation "Convert ELE to an array")
+  (:method ((str string))
+    (babel:string-to-octets str))
+  (:method ((str array))
+    str))
 
 (defgeneric request-headers (request)
-  (:documentation "Returns the headers for REQUEST."))
-
-(defmethod request-headers ((request lack.request:request))
-  (lack.request:request-headers request))
-
-(defmethod request-headers ((request tbnl:request))
-  (tbnl:headers-in request))
+  (:documentation "Returns the headers for REQUEST.")
+  (:method ((request lack.request:request))
+    (lack.request:request-headers request))
+  (:method ((request tbnl:request))
+    (tbnl:headers-in request)))
 
 (defun crc-raw (raw-body)
   (ironclad:octets-to-integer (ironclad:digest-sequence :crc32 raw-body)))
@@ -58,7 +52,6 @@
 
 (defmethod read-json (stream-or-string)
   (%read-json (symbol-value (find-symbol "*PROCESSOR*")) stream-or-string))
-
 
 (defgeneric print-all-slots (obj stream))
 

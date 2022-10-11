@@ -1,6 +1,6 @@
 (defpackage #:lisp-pay/stripe
   (:use #:cl #:lisp-pay)
-  (:nicknames #:stripe #:satmw)
+  (:nicknames #:stripe)
   (:export
    #:*processor*
    ;;;conditions

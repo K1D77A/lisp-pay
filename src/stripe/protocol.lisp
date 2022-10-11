@@ -43,14 +43,13 @@
 
 (defmethod construct-api-failure-object ((processor stripe)
                                          response)
-  (with-hash-keys (|error| |type|)
-      (gethash "type" (body response))
-    (let ((obj (make-instance (%determine-error-class type)
-                              :message message
-                              :parent-condition condition)))
+  (let ((error-hash (gethash "error" (body response))))
+    (with-hash-keys (|type|)
+        error-hash
+    (let ((obj (make-instance (%determine-error-class |type|))))
       (maphash (lambda (key val)
-                 (let ((slot-name (%error-key->slot-name parse-as key)))
+                 (let ((slot-name (%error-key->slot-name key)))
                    (when slot-name
                      (setf (slot-value obj slot-name) val))))
-               parsed)
-      obj)))
+               error-hash)
+      obj))))

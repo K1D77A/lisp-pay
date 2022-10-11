@@ -185,16 +185,40 @@ First you have to set `*api-key*` to your api key from stripe, you can do this l
 
 Then you simply do the following:
 
-```lisp 
-SATMW> (make-instance 'events%all)
-#<EVENTS%ALL {100F16210B}>
-SATMW> (call-api *)
-(:|url| "/v1/events" :|has_more| NIL :|data| NIL :|object| "list")
-```
-Jonathan is used for parsing. 
-Any API error is caught and converted into a condition as per the Stripe documentation. 
+```lisp
+STRIPE> (make-instance 'events%all)
+#<EVENTS%ALL 
+REQUEST-FUN: GET
+CONTENT-TYPE: application/json
+ {100849AFDB}>
 
-If you have a call that requires an argument like an `:id` in the path then there will be a slot by that name which you fill on creation.
+STRIPE> (call-api *)
+; Evaluation aborted on #<CLIENT-ERROR-RESPONSE 
+; PROCESSOR: #<STRIPE {1009884D93}>
+; STATUS-CODE: 401
+; BODY: #<HASH-TABLE :TEST EQUAL :COUNT 1 {10084B3813}>
+; DEX-RESPONSE: #S(DEX-RESPONSE
+;                  :BODY {
+;   "error": {
+;     "code": "api_key_expired",
+;     "doc_url": "https://stripe.com/docs/error-codes/api-key-expired",
+;     "message": "Expired API Key provided: sk_test_*********************************************************************************************DefuQi",
+;     "type": "invalid_request_error"
+;   }
+; }
+; 
+;                  :STATUS-CODE 401
+;                  :HEADERS #<HASH-TABLE :TEST EQUAL :COUNT 14 {10084B0BC3}>
+;                  :QURI https://api.stripe.com/v1/events)
+; API-FAILURE: #<INVALID-REQUEST-ERROR 
+; 
+; ERROR-TYPE: invalid_request_error
+; STATUS-CODE: api_key_expired
+; MESSAGE: Expired API Key provided: sk_test_*********************************************************************************************DefuQi
+; DOC-URL: https://stripe.com/docs/error-codes/api-key-expired
+;  {10084B54C3}>
+;  {10084B4D63}>
+```
 
 ```lisp
 SATMW> (make-instance 'events%id :id "abc")
@@ -209,7 +233,7 @@ SATMW> (make-instance 'charges%create :content '(("amount" . 100)("currency" . "
 ```
 Dexador is used to send the requests so it must be a properly formed ALIST.
 
-## Alist construct
+### Alist construct
 In `src/helpers.lisp` I have built a very simple DSL which will parse into an alist, you can pass the result of evaluating this as the :content key to dex:post. 
 ```lisp
 (defparameter *test* 
@@ -231,7 +255,7 @@ In `src/helpers.lisp` I have built a very simple DSL which will parse into an al
     ("fur" . "fluffy")
     ("colour" . "brown")))
 
-SATMW> (ec *test*)
+STRIPE> (ec *test*)
 (("fur" . "fluffy") ("cat" . "dog") ("woofers[0]" . "dog")
  ("woofers[1]" . "wolf") ("woofers[2][smol]" . "shih-tzu")
  ("woofers[2][big]" . "labrador") ("animals[0][oof]" . "doof")
@@ -264,7 +288,7 @@ Supports nested arrays although I've never tested it.
     ("fur" . "fluffy")
     ("colour" . "brown")))
 
-SATMW> (ec *test2*)
+STRIPE> (ec *test2*)
 (("fur" . "fluffy") ("cat" . "dog") ("animals[0][oof]" . "doof")
  ("animals[0][kaboof]" . "foo") ("animals[1]" . "dog") ("animals[2]" . "cat")
  ("animals[3]" . "bird") ("images[0][fur]" . "fluffy")
@@ -284,25 +308,31 @@ pass them as arguments to `verify-signature`. This returns a boolean (t or nil)
 to tell you if it validated and the time difference between the timestamp received 
 and `local-time:now`
 
-There is currently one build in method to validate instances `lack.request:request`
-these are the wrappers created by Ningle (which uses clack and lack), so you can `verify-webhook` with `ningle:*request*` and your signing secret. See `./api/webhooks.lisp` to see how to implement verification for other servers.
+`verify-webhook` works with a `lack.request` or a `tbnl:request`
+in my example I use it in much the same way as in Paypal.
 
-An example of `verify-webhook` with Ningle:
 ```lisp
-(setf (ningle/app:route *app* *stripe-webhook* :method :post)
-      (lambda (params)
-        (declare (ignore params))
-        (multiple-value-bind (validp time-dif raw)
-            (satmw:verify-webhook *stripe-webhook-signing-secret* ningle:*request*)
-          (if (validate-webhook :stripe validp time-dif)
-              "fail"
-              (let* ((parsed (jojo:parse (babel:octets-to-string raw)
-                                         :as :hash-table)))
-                (process-webhook :stripe parsed))))))
+(defmethod handle-webhook (client processor request)
+  "Handles a webhook REQUEST properly by validating it for each processor, 
+then constructing an internal representation of the hook, preprocessing it and then 
+responding to it."
+  (destructuring-bind (&key validp raw &allow-other-keys)
+      (validate-received-webhook client processor request)
+    (if (and validp raw)
+        ....)))
+
+(defmethod validate-received-webhook (client (processor stripe) req)
+  (multiple-value-bind (valid-hook-p time-dif raw)
+      (satmw:verify-webhook (webhook-secret processor) req)
+    (declare (ignore time-dif))
+    (list :validp valid-hook-p :raw raw))
 ```
 
 
+# BTCPay
 
+Docs are coming soon. I have wrapped the endpoints but I have not integrated it yet
+so I do not know if it works properly.
 
 
 
@@ -311,6 +341,8 @@ An example of `verify-webhook` with Ningle:
 
 # Coinpayments
 
+This has not been integrated into lisp-pay and I have no plans to do it. I suggest
+you use your own version of BTCPayserver instead.
 
 ## cl-coinpayments
 This is simply a helper library for using working with the original version of the 

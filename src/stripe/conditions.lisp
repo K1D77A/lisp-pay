@@ -10,9 +10,9 @@
    (parent-condition
     :accessor parent-condition 
     :initarg :parent-condition)
-   (code
-    :accessor code
-    :initarg :code)
+   (status-code
+    :accessor status-code
+    :initarg :status-code)
    (decline-code
     :accessor decline-code
     :initarg :decline-code)
@@ -76,7 +76,7 @@
 (defmethod %error-key->slot-name (key)
   (let ((alist 
           '(("type" . nil)
-            ("message" . nil)
+            ("message" . message)
             ("code" . status-code)
             ("decline_code" . decline-code)
             ("param" . param)
