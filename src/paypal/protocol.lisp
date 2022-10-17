@@ -47,7 +47,7 @@
     (missing-token ()
       :report "Token could be broken, refresh and try again?"
       (get-token processor)
-      (%call-api processor request))))
+      (call-next-method))))
 
 (defmethod construct-api-failure-object ((processor paypal)
                                          response)
