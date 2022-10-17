@@ -33,7 +33,7 @@ Every processor has the exported symbol `*processor*` which is bound to an insta
 of a subclass of `processor`. Paypal, Stripe, and BTCPay all have their own versions,
 so you can set 
 ```lisp
-(setf stripe:*processor* (make-instance 'stripe:stripe \<initargs\>))
+(setf lisp-pay:*processor* (make-instance 'stripe:stripe \<initargs\>))
 ```
 And then your version with your keys will be used when evaluating `call-api`
 
