@@ -6,6 +6,10 @@
     :initarg :api-key
     :initform #.(format nil "sk_test_51Jn99bKazowTfVdknr4RjY5oqPKBrUV6B613Wj3afh~
                              pM76nl9QauaUPsWZo9nzxCalG8S1BUwSPewl9tDd2u28bN00D2DefuQi"))
+   (public-key
+    :accessor public-key
+    :initarg :public-key
+    :type (or keyword string))
    (api-version
     :accessor api-version
     :initarg :api-version

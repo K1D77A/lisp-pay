@@ -15,7 +15,8 @@ api calls."
             :initform ',metaclass)))
        ,@(append options
                  '((:export-class-name-p t)
-                  (:export-accessor-names-p t))))
+                   (:export-accessor-names-p t)
+                   (:export-slot-names-p t))))
      (defmacro defapi (name (endpoint super &key (metaclass ',metaclass))
                        &optional query-slots)
        (let* ((slots (slots-from-url endpoint))

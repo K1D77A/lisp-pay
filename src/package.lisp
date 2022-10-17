@@ -30,6 +30,7 @@
            #:with-hash-keys
 
            ;;protocol
+           #:base-url
            #:replace-vars-for-slot-names
            #:gen-url-generator
            #:gen-query-generator
