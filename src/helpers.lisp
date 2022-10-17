@@ -1,5 +1,10 @@
 (in-package #:lisp-pay)
 
+(defparameter *processor*
+  :BIND-ME
+  "Bind *processor* to the value of your processor for whatever payment processor
+you are using in order to call the correct methods.")
+
 (defgeneric raw-body (request)
   (:documentation "Returns the raw body of request."))
 
@@ -42,7 +47,7 @@
   (shasht:write-json obj stream))
 
 (defmethod write-json (obj &optional stream)
-  (%write-json (symbol-value (find-symbol "*PROCESSOR*")) obj stream))
+  (%write-json lisp-pay:*processor* obj stream))
 
 (defgeneric read-json (stream-or-string)
   (:documentation "Read JSON"))
@@ -51,7 +56,7 @@
   (shasht:read-json stream-or-string))
 
 (defmethod read-json (stream-or-string)
-  (%read-json (symbol-value (find-symbol "*PROCESSOR*")) stream-or-string))
+  (%read-json lisp-pay:*processor* stream-or-string))
 
 (defgeneric print-all-slots (obj stream))
 

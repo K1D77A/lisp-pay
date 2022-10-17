@@ -39,8 +39,41 @@ And then your version with your keys will be used when evaluating `call-api`
 
 ## TODO
 
-Easy macro for lexically binding the value of `<package>:*processor*` on a per use
-basis. 
+Easy macro for lexically binding the value of `lisp-pay:*processor*` on a per use
+basis. e.g:
+
+```lisp
+(defmacro with-established-processor-bindings ((processor-key processor-object way)
+                                               &body body)
+  (%establish-processor-bindings processor-key processor-object way body))
+
+(defgeneric %establish-processor-bindings (processor object way body)
+  (:documentation "Use keyword arguments to determine the correct let bindings 
+for a PROCESSOR, processor being the keyword version."))
+
+(defmethod %establish-processor-bindings ((processor (eql :stripe)) object way body)
+  `(let ((lisp-pay:*processor* ,object))
+     (declare (special lisp-pay:*processor*))
+     (locally ,@body)))
+```
+
+And then
+
+```lisp
+(defmethod create-webhook ((processor stripe) client &rest args)
+  (with-established-processor-bindings (:stripe processor :default)
+    (destructuring-bind (&key description events url &allow-other-keys)
+        args
+      (let* ((content
+               (stripe:ec
+                `(("description". ,description)
+                  ("url" . ,url)
+                  (:array "enabled_events"
+                          ,events))))
+             (call (make-instance 'stripe:webhooks%create :content content))
+             (res (pay:call-api call)))
+        res))))
+```
 
 ### Stripe
 

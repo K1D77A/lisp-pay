@@ -2,8 +2,6 @@
 
 (in-package #:lisp-pay)
 
-(defparameter *processor* (make-instance 'processor))
-
 (defmacro defprocessor (name metaclass direct-slots &rest options)
   "Defines a class by NAME which is a subclass of processor 
 and the initform for the slot api-metaclass is METACLASS. DIRECT-SLOTS being 

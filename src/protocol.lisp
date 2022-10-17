@@ -139,7 +139,7 @@ payment processor."))
   (:documentation "Generic means of making per processor requests."))
 
 (defmethod call-api (request)
-  (%call-api (symbol-value (find-symbol "*PROCESSOR*")) request))
+  (%call-api lisp-pay:*processor* request))
 
 (defmacro wrap-dex-call (&body body)
   `(new-dex-response

@@ -14,6 +14,7 @@
            #:defprocessor
 
            ;;helpers
+           #:*processor*
            #:request
            #:raw-body
            #:to-array
