@@ -34,7 +34,7 @@
     :accessor name
     :initarg :name)))
 
-(defclass failed-request (paypal-api-condition)
+(defclass failed-request (paypal-api-failure)
   ())
 
 (defclass authorization-error (failed-request)

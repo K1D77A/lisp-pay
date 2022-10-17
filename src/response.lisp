@@ -90,7 +90,11 @@ APIs
    (dex-response
     :accessor dex-response
     :initarg :dex-response
-    :documentation "The Dex response.")))
+    :documentation "The Dex response.")
+   (processor
+    :accessor processor
+    :initarg :processor
+    :documentation "The processor used.")))
 
 (defmethod print-object ((obj api-response-class) stream)
   (print-unreadable-object (obj stream :type t :identity t)

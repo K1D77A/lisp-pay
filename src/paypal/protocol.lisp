@@ -29,9 +29,9 @@
 
 (defmethod generate-dex-list append ((processor paypal) req)
   (declare (special *request-headers*))
-  (is-token-non-nil processor)
-  (is-token-bound processor)
-  (is-expired-token (token processor))
+  (check-token-bound processor)
+  (check-token-non-nil processor)
+  (check-expired-token (token processor))
   `(:headers ,(append `(("Content-Type" . ,(content-type req))
                         ("Authorization" . ,(format nil "Bearer ~A" (access-token
                                                                      (token processor)))))
@@ -47,7 +47,7 @@
     (missing-token ()
       :report "Token could be broken, refresh and try again?"
       (get-token processor)
-      (call-next-method))))
+      (%call-api processor request))))
 
 (defmethod construct-api-failure-object ((processor paypal)
                                          response)

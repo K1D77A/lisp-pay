@@ -37,8 +37,8 @@
 
 (defun get-token (processor &optional (ignore-checks nil))
   (with-accessors ((token token)
-                   (client client)
-                   (secret secret))
+                   (client-id client-id)
+                   (secret-id secret-id))
       processor 
     (if (or ignore-checks 
             (or (not (slot-boundp processor 'token))
@@ -49,7 +49,7 @@
                     (wrap-dex-call 
                       (dex:post (format nil "~A/v1/oauth2/token"
                                         (base-url processor))
-                                :basic-auth `(,client . ,secret)
+                                :basic-auth `(,client-id . ,secret-id)
                                 :headers '(("Accept" . "application/json")
                                            ("Accept-Language" . "en_US"))
                                 :content '(("grant_type" . "client_credentials")))))))
@@ -65,17 +65,17 @@
     (let* ((now (local-time:now)))
       (local-time:timestamp<= expires-in now))))
 
-(defun is-token-non-nil (processor)
-  (unless (token processor)
+(defun check-token-non-nil (processor)
+  (when (null (token processor))
     (error 'unbound-token)))
 
-(defmethod is-expired-token (token)
+(defmethod check-expired-token (token)
   (error 'unbound-token))
 
-(defmethod is-expired-token ((token token))
+(defmethod check-expired-token ((token token))
   (when (expiredp token)
     (error 'expired-token :token token)))
 
-(defmethod is-token-bound (processor)
+(defmethod check-token-bound (processor)
   (unless (slot-boundp processor 'token)
     (error 'unbound-token)))
