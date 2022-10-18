@@ -52,10 +52,11 @@ you are using in order to call the correct methods.")
 (defgeneric read-json (stream-or-string)
   (:documentation "Read JSON"))
 
-(defmethod read-json ((ele simple-array))
-  nil)
+(defmethod %read-json (processor (stream-or-string array))
+  (unless (zerop (length stream-or-string))
+    (shasht:read-json stream-or-string)))
 
-(defmethod %read-json (processor stream-or-string)
+(defmethod %read-json (processor (stream stream))
   (shasht:read-json stream-or-string))
 
 (defmethod read-json (stream-or-string)
