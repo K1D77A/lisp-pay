@@ -16,8 +16,7 @@ Many helpers for defining MOP protocols for API wrappers.
 (defun replace-vars-for-slot-names (split slots)
   "Takes in a split list split by #\/ (url) produces a list of slot names"
   (mapcar (lambda (str)
-            (let ((found?
-                    (find (subseq str 1) slots :test #'string-equal)))
+            (let ((found? (find (subseq str 1) slots :test #'string-equal)))
               (if found?
                   found?
                   str)))

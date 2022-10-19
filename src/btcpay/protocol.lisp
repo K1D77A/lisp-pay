@@ -52,17 +52,18 @@
   (with-accessors ((status-code status-code)
                    (body body))
       response
-    (case status-code
-      (422 (map 'list (lambda (hashes)
-                        (with-hash-keys (|path| |message|)
-                            hashes
-                          (make-instance 'btcpay-api-failure-obj-list-entry
-                                         :message |message|
-                                         :path |path|)))
-                body))
-      (otherwise 
+    (typecase status-code
+      (simple-array
+       (map 'list (lambda (hash)
+                    (with-hash-keys (|path| |message|)
+                        hash
+                      (make-instance 'btcpay-api-failure-obj-list-entry
+                                     :message |message|
+                                     :path |path|)))
+            body))
+      (hash-table 
        (with-hash-keys (|code| |message|)
-           (body response)
+           body
          (make-instance 'btcpay-api-failure-obj
                         :code |code|
                         :message |message|))))))
