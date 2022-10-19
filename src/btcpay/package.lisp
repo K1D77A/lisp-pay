@@ -4,5 +4,6 @@
   (:export #:*processor*
            #:btcpay-api-failure-obj
            #:code
-           #:message))
+           #:message
+           #:verify-webhook))
 

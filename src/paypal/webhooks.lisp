@@ -46,17 +46,14 @@
                                 (cl-base64:base64-string-to-usb8-array signature)
                                 :sha256))
 
-(defgeneric verify-webhook (algo cert-url transmission-signature transmission-id
-                            timestamp webhook-id raw-body)
-  (:documentation "Verifies the webhook."))
-
-(defmethod verify-webhook (algo cert-url transmission-signature transmission-id
-                           timestamp webhook-id raw-body)
+(defun %verify-paypal-webhook (algo cert-url transmission-signature transmission-id
+                              timestamp webhook-id raw-body)
   (let* ((crc (crc-raw raw-body))
          (key (cert->public-key algo cert-url))
          (message (%generate-signature-bytes
                    transmission-id timestamp webhook-id crc)))
-    (%verify-message algo key transmission-signature message)))
+    (values (%verify-message algo key transmission-signature message)
+            raw-body)))
 
 (defun %algo->key (algo)
   "Convert the algo string into a keyword."
@@ -64,27 +61,27 @@
          :SHA256WITHRSA)
         (t (error "Unknown encryption algorithm. Please implement or inform maintainer."))))
 
-(defgeneric verify-paypal-webhook (webhook-id request raw-body)
+(defgeneric verify-webhook (webhook-id request)
   (:documentation "Generic means of verifying a webhook from Paypal. Just a simple wrapper
-around #'verify-webhook which extracts the extracts the required information from the 
-headers."))
+around #'%verify-paypal-webhook which extracts the extracts the required
+ information from the headers."))
 
-(defmethod verify-paypal-webhook (webhook-id (request hunchentoot:request) raw-body)
+(defmethod verify-webhook (webhook-id (request hunchentoot:request))
   (let* ((headers (request-headers request))
          (auth-algo (%algo->key (cdr (assoc :paypal-auth-algo headers))))
          (transmission-sig (cdr (assoc :paypal-transmission-sig headers)))
          (cert-url (cdr (assoc :paypal-cert-url headers)))
          (transmission-id (cdr (assoc :paypal-transmission-id headers)))
          (transmission-time (cdr (assoc :paypal-transmission-time headers))))
-    (verify-webhook auth-algo cert-url transmission-sig transmission-id
+    (%verify-paypal-webhook auth-algo cert-url transmission-sig transmission-id
                     transmission-time webhook-id raw-body)))
 
-(defmethod verify-paypal-webhook (webhook-id (request lack.request:request) raw-body)
+(defmethod verify-webhook (webhook-id (request lack.request:request))
   (let* ((headers (request-headers request))
          (auth-algo (%algo->key (gethash "paypal-auth-algo" headers)))
          (transmission-sig (gethash "paypal-transmission-sig" headers))
          (cert-url (gethash "paypal-cert-url" headers))
          (transmission-id (gethash "paypal-transmission-id" headers))
          (transmission-time (gethash "paypal-transmission-time" headers)))
-    (verify-webhook auth-algo cert-url transmission-sig transmission-id
+    (%verify-paypal-webhook auth-algo cert-url transmission-sig transmission-id
                     transmission-time webhook-id raw-body)))

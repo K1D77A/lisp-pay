@@ -45,7 +45,5 @@
            #:get-token
            
            ;;webhook-verify
-           #:verify-paypal-webhook
            #:verify-webhook
-           #:%algo->key
            ))

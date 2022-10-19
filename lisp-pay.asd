@@ -31,7 +31,8 @@
                (:module "btcpay"
                 :components ((:file "package")
                              (:file "protocol")
-                             (:file "btcpay")))
+                             (:file "btcpay")
+                             (:file "webhooks")))
                (:module "stripe"
                 :components ((:file "package")
                              (:file "conditions")
@@ -45,7 +46,7 @@
                              (:file "protocol")
                              (:file "token")
                              (:file "paypal")
-                             (:file "webhook-verify")))
+                             (:file "webhooks")))
                (:module "coinpayments"
                 :components ((:file "package")
                              (:file "classes")
