@@ -36,7 +36,7 @@ valid (bool) and the difference between TIMESTAMP and #'local-time:now (unix epo
     (let ((raw (raw-body request)))
       (multiple-value-bind (validp time-dif)
           (verify-signature signing-secret (gethash "v1" hash) (gethash "t" hash) raw)
-        (values validp time-dif raw)))))
+        (values validp raw time-dif)))))
 
 (defmethod verify-webhook (signing-secret (request LACK.REQUEST:REQUEST))
   ;;this could fail on multiple v1's idk... they are a bit vague about it in the spec
