@@ -74,7 +74,7 @@ around #'%verify-paypal-webhook which extracts the extracts the required
          (transmission-id (cdr (assoc :paypal-transmission-id headers)))
          (transmission-time (cdr (assoc :paypal-transmission-time headers))))
     (%verify-paypal-webhook auth-algo cert-url transmission-sig transmission-id
-                    transmission-time webhook-id raw-body)))
+                    transmission-time webhook-id (raw-body request))))
 
 (defmethod verify-webhook (webhook-id (request lack.request:request))
   (let* ((headers (request-headers request))
@@ -84,4 +84,4 @@ around #'%verify-paypal-webhook which extracts the extracts the required
          (transmission-id (gethash "paypal-transmission-id" headers))
          (transmission-time (gethash "paypal-transmission-time" headers)))
     (%verify-paypal-webhook auth-algo cert-url transmission-sig transmission-id
-                    transmission-time webhook-id raw-body)))
+                    transmission-time webhook-id (raw-body request))))

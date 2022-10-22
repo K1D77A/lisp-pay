@@ -44,7 +44,7 @@
 (defmethod %call-api :around ((processor paypal) request)
   (restart-case
       (call-next-method)
-    (missing-token ()
+    (missing-or-expired-token ()
       :report "Token could be broken, refresh and try again?"
       (get-token processor)
       (call-next-method))))
