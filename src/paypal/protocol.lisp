@@ -6,7 +6,9 @@
    (token
     :accessor token 
     :initarg :token
-    :type token)
+    :initform nil
+    :type (or token null)
+    :documentation "Paypal token, this is used for every api call except receiving the token itself.")
    (secret-id 
     :accessor secret-id 
     :initarg :secret-id 
