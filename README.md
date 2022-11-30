@@ -10,7 +10,10 @@ Coinpayments separately because I have no plans to integrate it into Lisp-pays c
 ## Differences from their original libraries
 I have removed all \*parse-as\* all global variables except \*processor\*, everything is
 now configured using a specific object for each library which is bound to \*processor\* for
-each package. 
+each package.
+
+## Json 
+
 Everything is automatically parsed as a hash-table using Shasht.
 
 This default behaviour can be changed by specializing the Generic function 
@@ -36,6 +39,162 @@ so you can set
 (setf lisp-pay:*processor* (make-instance 'stripe:stripe \<initargs\>))
 ```
 And then your version with your keys will be used when evaluating `call-api`
+
+The Processor class only has 1 useful slot by default which is `base-url`
+
+## Subclasses of Processor
+
+The sublcasses of Processor exist in each of the payment processors respective packages and contain the following slots:
+
+### Stripe 
+
+- api-key 
+- api-version (This should remain as default)
+- base-url 
+
+### Paypal 
+- base-url (This should remain as default unless using sandbox)
+- secret-id
+- token (bound with #'get-token \<processor\>)
+- client-id 
+
+### BTCPay
+- api-key
+- base-url
+
+Unless stated otherwise these are set by you as a means of configuration.
+
+
+## Webhooks
+
+All webhook verification is done with a method called #'verify-webhook but there is a different version of this exported by each payment processors package.
+
+- btcpay:verify-webhook
+- stripe:verify-webhook
+- paypal:verify-webhook
+
+The REQUEST argument to these can be either a tbnl:request object or a lack.request:request object.
+
+## Making requests
+
+Making a request is simple, you make an instance of the api call you want to make
+
+```lisp
+ (make-instance 'stripe:webhooks%create :content content)
+```
+And then you execute
+```lisp
+(pay:call-api *)
+```
+
+You can find the full list of supported API endpoints in src/<processor>/<processor>.lisp
+
+### Post content
+
+By default all content you want sent as your HTTP Request body is put into the slot `content`
+This is then encoded into a JSON object for most processors:
+
+Here is a complex example:
+
+```lisp
+(make-instance 'paypal:orders%create
+               :content
+               (list :|intent| "CAPTURE"
+                     :|application_context|
+                     (list :|return_url|
+                           "reeeeeeee.com/iwon"
+                           :|cancel_url|
+                           "reeeeeeee.com/ifailed"
+                           :|payment_method|
+                           (list :|payee_preferred|
+                                 "IMMEDIATE_PAYMENT_REQUIRED"))
+                     :|purchase_units|
+                     (list (list :|custom_id|
+                                 "abcdef"
+                                 :|amount|                                        
+                                 (list :|currency_code|
+                                       "GBP"
+                                       :|value|
+                                       "10.99")))))
+
+```
+
+As long as the :content is converted to the correct JSON object then it doesn't matter how you generate it.
+To use plists as object in shasht you need the following:
+`(setf shasht:*write-plist-as-object* t)`
+
+
+```lisp
+#<LISP-PAY/PAYPAL:ORDERS%CREATE 
+REQUEST-FUN: POST
+CONTENT-TYPE: application/json
+CONTENT: 
+{
+  "intent": "CAPTURE",
+  "application_context": {
+    "return_url": "reeeeeeee.com/iwon",
+    "cancel_url": "reeeeeeee.com/ifailed",
+    "payment_method": {
+      "payee_preferred": "IMMEDIATE_PAYMENT_REQUIRED"
+    }
+  },
+  "purchase_units": [
+    {
+      "custom_id": "abcdef",
+      "amount": {
+        "currency_code": "GBP",
+        "value": "10.99"
+      }
+    }
+  ]
+}
+ {100802006B}>
+```
+
+
+
+### Query parameters
+
+Query parameters are slots within the object, just set them and the ones that are bound will be encoded and added onto the end of the URL.
+
+### Path parameters
+
+Path parameters are slots within the request object, just set the slots and they will be automatically encoded into the URL.
+
+
+
+
+## A Response
+
+Every response from the API is made into an instance of a subclass of `api-response-class`
+
+- information-response
+- successful-response
+- redirection-response
+
+or if it is a HTTP condition like a 404 a subclass of the condition `api-response-condition`
+
+- client-error-response
+- server-error-response
+- unknown-error-response
+
+If the response is converted into a condition, the condition is then signalled.
+Before it is signalled a special object is created which is a subclass of `api-failure`
+
+As an example paypals version of this has the slots
+
+- status-text
+- message
+- name
+
+These slots are occupied with information taken from the error response from the API.
+
+See src/<processor>/conditions.lisp for the others. 
+
+
+
+To receives the body of a response (ie the useful information) use #'body
+
 
 ## TODO
 
@@ -75,40 +234,9 @@ And then
         res))))
 ```
 
-### Stripe
+This is you can write one yourself.
 
-- api-key 
-- api-version (This should remain as default)
-- base-url 
-
-### Paypal 
-- base-url (This should remain as default unless using sandbox)
-- secret-id
-- token (bound with #'get-token \<processor\>)
-- client-id 
-
-### BTCPay
-- api-key
-- base-url
-
-
-## Conditions
-
-All conditions are a subclass of `api-response-condition` 
-Each payment processor has a specific `api-failure` object which is a subclass of 
-`api-failure` these are just a nicely version of the response body. You can use this 
-to dispatch.
-
-## General notes
-
-### Query parameters
-
-Query parameters are slots within the object, just set them and the ones that are bound will be encoded and added onto the end of the URL.
-
-### Path parameters
-
-Path parameters are slots within the request object, just set the slots and they will be automatically encoded into the URL.
-
+# Individual Processors
 
 ## Paypal 
 
@@ -183,7 +311,7 @@ You can see the additional headers in the paypal dev docs.
 
 ## Webhook verification
 To verify the signature of a paypal request you can use 
-`(paypal:verify-paypal-webhook)` 
+`(paypal:verify-webhook)` 
 which takes `webhook-id request raw-body`
 The webhook-id is returned when you create a webhook.
 
@@ -201,13 +329,11 @@ responding to it."
 
 (defmethod validate-received-webhook (client (processor paypal) req)
   (let ((raw (de:ningle-raw-body req)))
-    (list :validp (paypal:verify-paypal-webhook (webhook-id processor) req raw)
+    (list :validp (paypal:validate-webhook (webhook-id processor) req raw)
           :raw raw)))
           
 ```
 (please note that PROCESSOR above is not the same as the definition within this library)
-
-There are methods for `lack.request` and a `tbnl:request`
 
 
 # Stripe
@@ -371,12 +497,41 @@ responding to it."
 
 # BTCPay
 
-Docs are coming soon. I have wrapped the endpoints but I have not integrated it yet
-so I do not know if it works properly.
+BTCPay has been fully integrated into Lisp Pay.
 
+The BTCPay processor object has an API key slot and you must set the base-url.
 
+```lisp
+LISP-PAY> (make-instance 'btcpay:stores-webhooks%all)
+#<LISP-PAY/BTCPAY:STORES-WEBHOOKS%ALL 
+REQUEST-FUN: GET
+CONTENT-TYPE: application/json
+ {100802000B}>
+ ```
 
+```lisp
+LISP-PAY>(call-api *)
+```
 
+## Verify webhooks 
+
+Like with Paypal and Stripe you just call
+
+```lisp
+(btcpay:verify-webhook <signing-secret> <request>)
+```
+
+This returns multiple values, whether it is valid and the raw request body.
+
+Again this is how I use it in a real system:
+
+```lisp
+(defmethod validate-received-webhook (client (processor btcpayserver) req)
+  (multiple-value-bind (validp raw)
+      (btcpay:verify-webhook (webhook-secret processor) req)
+    (list :validp validp 
+          :raw raw)))
+```
 
 
 # Coinpayments

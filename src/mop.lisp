@@ -102,6 +102,13 @@ of the slot name when encoding in the Query string.")))
     :type list))
   (:metaclass lisp-pay-api-call))
 
+(defmethod print-object ((obj request-with-content) stream)
+  (print-unreadable-object (obj stream :type t :identity t)
+    (format stream "~%REQUEST-FUN: ~A~%CONTENT-TYPE: ~A~%CONTENT: ~%~A~%"
+            (request-fun obj)
+            (content-type obj)
+            (write-json (content obj)))))
+
 (defclass post-request (request-with-content)
   ((request-fun :initform 'dex:post))
   (:metaclass lisp-pay-api-call))

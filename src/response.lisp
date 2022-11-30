@@ -75,7 +75,7 @@ APIs
 (define-condition server-error-response (api-response-condition)
   ())
 
-(define-condition unknown-server-response (api-response-condition)
+(define-condition unknown-error-response (api-response-condition)
   ())
 
 (defclass api-response-class ()
@@ -127,7 +127,7 @@ function ie #'make-instance/#'make-condition and a class."))
           ((<= 500 n 599)
            (values #'make-condition 'server-error-response))
           (t
-           (values #'make-condition 'unknown-server-response)))))
+           (values #'make-condition 'unknown-error-response)))))
 
 (defgeneric construct-initargs-for-response (processor status body response)
   (:method-combination append :most-specific-last)
