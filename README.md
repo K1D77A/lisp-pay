@@ -73,7 +73,7 @@ All webhook verification is done with a method called #'verify-webhook but there
 - stripe:verify-webhook
 - paypal:verify-webhook
 
-The REQUEST argument to these can be either a tbnl:request object or a lack.request:request object.
+The REQUEST argument to these can be either a `tbnl:request` object or a `lack.request:request` object.
 
 ## Making requests
 
