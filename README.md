@@ -67,13 +67,34 @@ Unless stated otherwise these are set by you as a means of configuration.
 
 ## Webhooks
 
-All webhook verification is done with a method called #'verify-webhook but there is a different version of this exported by each payment processors package.
+Every payment processor that is supported requires a HTTP route to be configured on your system which is accessible by the payment processor. By default `hunchentoot` and `lack` (and systems that use lack) is supported (it is trivial to add other servers.) 
+
+All webhook verification is done with a generic function called `#'verify-webhook` but there is a different version of this exported by each payment processors package.
 
 - btcpay:verify-webhook
 - stripe:verify-webhook
 - paypal:verify-webhook
 
 The REQUEST argument to these can be either a `tbnl:request` object or a `lack.request:request` object.
+
+Each of these generic functions return two values,
+- a boolean telling you whether the webhook is valid.
+- the raw content of the request.
+
+Here is an example:
+
+```lisp
+(setf (ningle/app:route *app* "/webhooks/btcpayreceive"
+                        :method :post)
+      (lambda (params)
+        (declare (ignorable params))
+        (multiple-value-bind (validp raw)
+            (btcpay:verify-webhook *btcpay-webhook-secret* ningle:*request*)
+          (if validp
+              "t"
+              "nil"))))
+```
+
 
 ## Making requests
 
@@ -240,8 +261,8 @@ This is you can write one yourself.
 
 ## Paypal 
 
-To get started create your own version of the paypal processor object and then bind 
-paypal:\*processor\* to this. 
+
+First bind `lisp-pay:*processor*` to your instance of `paypal:paypal`
 
 Then call `(get-token <my-processor>)`.
 
@@ -308,47 +329,17 @@ Headers are sent using Dex so they have to be a properly formed alist like above
 You can see the additional headers in the paypal dev docs.
 
 
-
-## Webhook verification
-To verify the signature of a paypal request you can use 
-`(paypal:verify-webhook)` 
-which takes `webhook-id request raw-body`
-The webhook-id is returned when you create a webhook.
-
-Here is an example of how I use it in practice: 
-```lisp
-
-(defmethod handle-webhook (client processor request)
-  "Handles a webhook REQUEST properly by validating it for each processor, 
-then constructing an internal representation of the hook, preprocessing it and then 
-responding to it."
-  (destructuring-bind (&key validp raw &allow-other-keys)
-      (validate-received-webhook client processor request)
-    (if (and validp raw)
-        ....)))
-
-(defmethod validate-received-webhook (client (processor paypal) req)
-  (let ((raw (de:ningle-raw-body req)))
-    (list :validp (paypal:validate-webhook (webhook-id processor) req raw)
-          :raw raw)))
-          
-```
-(please note that PROCESSOR above is not the same as the definition within this library)
-
-
-# Stripe
+## Stripe
 
 This is a an implementation of the Stripe API. 
 
 Currently have wrapped the section Core Resources and under Products the products, prices and shipping then, under Checkout the sessions and finally under Webhooks the webhooks. 
 
-## How to 
-To change the default parser from jojo's plist to a hash-table change `*parse-as*` to 
-a valid (jojo:parse <content> :as <key>), I suggest :hash-table
+### How to 
 
-First set the value of `stripe:*processor* to your instance of the stripe processor.
+First bind `lisp-pay:*processor*` to your instance of `stripe:stripe`
 
-Then you simply do the following:
+Then:
 
 ```lisp
 STRIPE> (make-instance 'events%all)
@@ -464,42 +455,14 @@ STRIPE> (ec *test2*)
 ```
 `ec` now also accepts hash-tables and will attempt to convert them into the correctly encoded format for Stripe. You can even combine lists written in the basic DSL I wrote with hash-tables to produce one large alist to pass to Stripe.
 
-## Webhooks
-
-To verify the webhooks from Stripe you need to follow the instructions here:
-https://stripe.com/docs/webhooks/signatures
-
-Extract the raw-body, the signature (v1), and the timestamp then 
-pass them as arguments to `verify-signature`. This returns a boolean (t or nil) 
-to tell you if it validated and the time difference between the timestamp received 
-and `local-time:now`
-
-`verify-webhook` works with a `lack.request` or a `tbnl:request`
-in my example I use it in much the same way as in Paypal.
-
-```lisp
-(defmethod handle-webhook (client processor request)
-  "Handles a webhook REQUEST properly by validating it for each processor, 
-then constructing an internal representation of the hook, preprocessing it and then 
-responding to it."
-  (destructuring-bind (&key validp raw &allow-other-keys)
-      (validate-received-webhook client processor request)
-    (if (and validp raw)
-        ....)))
-
-(defmethod validate-received-webhook (client (processor stripe) req)
-  (multiple-value-bind (valid-hook-p time-dif raw)
-      (satmw:verify-webhook (webhook-secret processor) req)
-    (declare (ignore time-dif))
-    (list :validp valid-hook-p :raw raw))
-```
-(please note that PROCESSOR above is not the same as the definition within this library)
-
-# BTCPay
+## BTCPay
 
 BTCPay has been fully integrated into Lisp Pay.
 
 The BTCPay processor object has an API key slot and you must set the base-url.
+
+First bind `lisp-pay:*processor*` to your instance of `btcpay:btcpay`
+
 
 ```lisp
 LISP-PAY> (make-instance 'btcpay:stores-webhooks%all)
@@ -512,27 +475,6 @@ CONTENT-TYPE: application/json
 ```lisp
 LISP-PAY>(call-api *)
 ```
-
-## Verify webhooks 
-
-Like with Paypal and Stripe you just call
-
-```lisp
-(btcpay:verify-webhook <signing-secret> <request>)
-```
-
-This returns multiple values, whether it is valid and the raw request body.
-
-Again this is how I use it in a real system:
-
-```lisp
-(defmethod validate-received-webhook (client (processor btcpayserver) req)
-  (multiple-value-bind (validp raw)
-      (btcpay:verify-webhook (webhook-secret processor) req)
-    (list :validp validp 
-          :raw raw)))
-```
-
 
 # Coinpayments
 
