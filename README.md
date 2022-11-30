@@ -87,7 +87,7 @@ And then you execute
 (pay:call-api *)
 ```
 
-You can find the full list of supported API endpoints in src/<processor>/<processor>.lisp
+You can find the full list of supported API endpoints in `src/PROCESSOR/PROCESSOR.lisp`
 
 ### Post content
 
@@ -189,7 +189,7 @@ As an example paypals version of this has the slots
 
 These slots are occupied with information taken from the error response from the API.
 
-See src/<processor>/conditions.lisp for the others. 
+See `src/PROCESSOR/conditions.lisp` for the others. 
 
 
 
