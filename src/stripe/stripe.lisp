@@ -199,3 +199,11 @@
 (defapi webhooks%update ("/v1/webhook_endpoints/:id" post-request))
 
 (defapi webhooks%delete ("/v1/webhook_endpoints/:id" delete-request))
+
+;;;payment methods
+(defapi payment-methods%create ("/v1/payment_methods" post-request))
+
+(defapi payment-methods%get ("/v1/payment_methods/:id" get-request))
+
+(defapi payment-methods%update ("/v1/payment_methods/:id" post-request))
+
