@@ -107,7 +107,12 @@ of the slot name when encoding in the Query string.")))
     (format stream "~%REQUEST-FUN: ~A~%CONTENT-TYPE: ~A~%CONTENT: ~%~A~%"
             (request-fun obj)
             (content-type obj)
-            (write-json (content obj)))))
+            ;;stripe takes an alist..
+            (handler-case                 
+                (write-json (content obj))
+              (type-error (c)
+                (declare (ignore c))
+                (content obj))))))
 
 (defclass post-request (request-with-content)
   ((request-fun :initform 'dex:post))
