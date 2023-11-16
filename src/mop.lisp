@@ -99,6 +99,7 @@ of the slot name when encoding in the Query string.")))
   ((content
     :accessor content
     :initarg :content
+    :initform ()
     :type list))
   (:metaclass lisp-pay-api-call))
 

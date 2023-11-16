@@ -27,6 +27,7 @@
   `(:basic-auth ,(list (api-key processor))))
 
 (defmethod generate-dex-list append ((processor stripe) (request request-with-content))
+  ;;sometimes content is actually optional 
   `(:content ,(content request)
     :headers (("Stripe-Version" . ,(api-version processor))
               ("Content-Type" . "application/x-www-form-urlencoded"))))
