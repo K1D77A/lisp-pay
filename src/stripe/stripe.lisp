@@ -207,3 +207,16 @@
 
 (defapi payment-methods%update ("/v1/payment_methods/:id" post-request))
 
+;;subscriptions
+
+(defapi subscriptions%create ("/v1/subscriptions" post-request))
+
+(defapi subscriptions%get ("/v1/subscriptions/:id" get-request))
+
+(defapi subscriptions%all ("/v1/subscriptions" get-request))
+
+(defapi subscriptions%update ("/v1/subscriptions/:id" post-request))
+
+(defapi subscriptions%cancel ("/v1/subscriptions/:id" delete-request))
+
+(defapi subscriptions%resume ("/v1/subscriptions/:id" post-request))
