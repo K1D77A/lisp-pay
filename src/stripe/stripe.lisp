@@ -29,7 +29,7 @@
 
 (defapi customers%id ("/v1/customers/:id" get-request))
 
-(defapi customers%id ("/v1/customers/:id" delete-request))
+(defapi customers%delete ("/v1/customers/:id" delete-request))
 
 
 
@@ -220,3 +220,6 @@
 (defapi subscriptions%cancel ("/v1/subscriptions/:id" delete-request))
 
 (defapi subscriptions%resume ("/v1/subscriptions/:id" post-request))
+
+(defapi subscriptions%delete ("/v1/subscriptions/:id" delete-request))
+
